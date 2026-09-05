@@ -43,8 +43,8 @@ export const manabox: ExportFormat = {
   label: 'ManaBox',
   kind: 'csv',
   ext: 'csv',
-  confidence: 'documented',
-  note: "Columns match ManaBox's documented import list. Binder Name and Binder Type appear in ManaBox exports but are not accepted on import, so they are left out.",
+  confidence: 'round-tripped',
+  note: "Imported into ManaBox successfully. LF line endings matter: a CRLF file leaves a stray return on the last column and ManaBox rejects every row.",
   render(rows) {
     return csvDocument(
       HEADER,

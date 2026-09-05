@@ -397,3 +397,6 @@ a { text-underline-offset: 0.18em; text-decoration-thickness: from-font; }
 .dropslab .fineprint { border-top: 1px solid var(--label-rule); }
 .dropslab .attr .v { white-space: nowrap; font-size: 11px; }
 .dropslab .setname { min-height: 2.2em; }
+
+.subswitch { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule-soft); }
+.subswitch .field { margin: 0 0 8px; }

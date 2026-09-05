@@ -67,7 +67,8 @@ export function ExportPane({
     }, 0)
   }
 
-  const documented = current.confidence === 'documented'
+  const proven = current.confidence === 'round-tripped'
+  const documented = proven || current.confidence === 'documented'
 
   return (
     <div className="panelbox">
@@ -86,7 +87,7 @@ export function ExportPane({
           ))}
         </select>
         <span className={`badge ${documented ? 'proven' : 'unproven'}`}>
-          {documented ? 'DOCUMENTED' : 'HEADER ONLY'}
+          {proven ? 'IMPORT VERIFIED' : documented ? 'DOCUMENTED' : 'HEADER ONLY'}
         </span>
       </div>
       <p className="note">{current.note}</p>

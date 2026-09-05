@@ -86,10 +86,8 @@ export async function loadManualDecks(
           continue
         }
         const stand = fallbacks.get(entry.name)
-        if (!stand) {
-          console.warn(`  manual: ${deck.slug} could not resolve "${entry.name}"`)
-          continue
-        }
+        // Dropping the row would publish a short deck that looks complete.
+        if (!stand) throw new Error(`${deck.slug}: no printing found for "${entry.name}"`)
         substituted++
         cards.push({
           id: stand.id,
@@ -128,49 +126,93 @@ export async function loadManualDecks(
 }
 
 /**
- * Scryfall's collection endpoint takes 75 identifiers per call and is capped at
- * 2 requests a second, which is stricter than the rest of the API.
+ * A stand-in printing should look like ordinary Magic. Scryfall's default for a
+ * name is its newest printing, and the newest printings are currently Marvel,
+ * Avatar, and other crossovers, which put wildly wrong-looking cards into a
+ * collection. Universes Beyond, promos, Secret Lair, tokens, digital-only, and
+ * joke sets are all excluded, and the newest ordinary paper printing wins.
  */
+const ORDINARY =
+  '-is:ub -is:promo -is:digital -st:funny -st:box -st:memorabilia -st:masterpiece -st:token lang:en'
+
 async function resolveByName(names: string[]): Promise<Map<string, ScryfallCard>> {
   const found = new Map<string, ScryfallCard>()
-  const retry: string[] = []
-  for (let i = 0; i < names.length; i += 75) {
-    const res = await fetch('https://api.scryfall.com/cards/collection', {
-      method: 'POST',
-      headers: {
-        'User-Agent': USER_AGENT,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({ identifiers: names.slice(i, i + 75).map((name) => ({ name })) }),
-    })
-    if (!res.ok) throw new Error(`cards/collection -> ${res.status}`)
-    const body = (await res.json()) as { data: ScryfallCard[]; not_found: { name?: string }[] }
-    for (const card of body.data) {
-      found.set(card.name, card)
-      // A double-faced card is asked for by its full name but comes back under
-      // whichever form Scryfall stores, so index both.
-      const front = card.name.split(' // ')[0]!
-      if (!found.has(front)) found.set(front, card)
+
+  // One request per name is 71 requests and Scryfall rate-limits it. Names are
+  // OR'd into a handful of queries instead, then the newest printing of each is
+  // picked from the merged result.
+  for (let i = 0; i < names.length; i += 12) {
+    const batch = names.slice(i, i + 12)
+    const clause = batch.map((n) => `!"${front(n)}"`).join(' or ')
+    const cards = await searchAll(`(${clause}) ${ORDINARY}`)
+
+    for (const name of batch) {
+      const key = front(name).toLowerCase()
+      const matches = cards.filter((c) => front(c.name).toLowerCase() === key)
+      // Sorted newest-first by the query, so the first match is the pick.
+      if (matches[0]) found.set(name, matches[0])
     }
-    retry.push(...body.not_found.map((m) => m.name).filter((n): n is string => Boolean(n)))
-    if (i + 75 < names.length) await new Promise((r) => setTimeout(r, 550))
+    if (i + 12 < names.length) await new Promise((r) => setTimeout(r, 250))
   }
 
-  // Scryfall indexes some double-faced cards under the front face alone.
-  for (const name of retry) {
-    const front = name.split(' // ')[0]!
+  // Anything the batch missed gets one direct look before it is called absent.
+  for (const name of names) {
     if (found.has(name)) continue
-    await new Promise((r) => setTimeout(r, 550))
-    const res = await fetch(
-      `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(front)}`,
-      { headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' } },
-    )
-    if (!res.ok) {
-      console.warn(`  manual: not found "${name}"`)
-      continue
-    }
-    found.set(name, (await res.json()) as ScryfallCard)
+    const card = await search(`!"${front(name)}" ${ORDINARY}`)
+    if (card) found.set(name, card)
+    await new Promise((r) => setTimeout(r, 250))
   }
   return found
+}
+
+async function searchAll(q: string): Promise<ScryfallCard[]> {
+  const out: ScryfallCard[] = []
+  let page = 1
+  for (;;) {
+    const body = await searchPage(q, page)
+    out.push(...(body.data ?? []))
+    if (!body.has_more) return out
+    page++
+    await new Promise((r) => setTimeout(r, 250))
+  }
+}
+
+/** Scryfall indexes some double-faced cards under the front face alone. */
+function front(name: string): string {
+  return name.split(' // ')[0]!
+}
+
+/**
+ * 404 means the query matched nothing and is a real answer. Anything else is a
+ * transport problem — a swallowed 429 silently shortens a card list, which is
+ * the one failure this project must never produce quietly.
+ */
+async function search(q: string): Promise<ScryfallCard | undefined> {
+  return (await searchPage(q, 1)).data?.[0]
+}
+
+async function searchPage(
+  q: string,
+  page: number,
+): Promise<{ data?: ScryfallCard[]; has_more?: boolean }> {
+  const url = new URL('https://api.scryfall.com/cards/search')
+  url.searchParams.set('q', q)
+  url.searchParams.set('unique', 'prints')
+  url.searchParams.set('order', 'released')
+  url.searchParams.set('dir', 'desc')
+  url.searchParams.set('page', String(page))
+
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+    })
+    if (res.status === 404) return {}
+    if (res.ok) return (await res.json()) as { data?: ScryfallCard[]; has_more?: boolean }
+    if (res.status === 429 || res.status >= 500) {
+      await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt))
+      continue
+    }
+    throw new Error(`cards/search ${res.status} for ${q}`)
+  }
+  throw new Error(`cards/search kept failing for ${q}`)
 }

@@ -16,7 +16,7 @@ only MTGJSON's per-entry flag tells them apart.
 
 | Target | Format | Verified how |
 |---|---|---|
-| ManaBox | CSV | Columns match ManaBox's **documented** import list |
+| ManaBox | CSV | **Imported into ManaBox successfully** |
 | Arena / MTGA | text | ManaBox documents its text import as MTGA format; spelling not round-tripped |
 | Plain names | text | Quantity and name only |
 | Moxfield | CSV | Header and vocabulary from a real 7385-row export |
@@ -28,11 +28,17 @@ only MTGJSON's per-entry flag tells them apart.
 | TopDecked | CSV | Header and vocabulary from a real 3169-row export |
 | Card Kingdom | CSV | Header from a real export |
 
-**Nothing here has been round-tripped through a real import yet.** ManaBox is the
-strongest case: its columns match the list ManaBox itself documents. The rest are
-built from real export headers, which is evidence a site reads them back, not
-proof. Each format carries its own badge in the interface — `DOCUMENTED` or
-`HEADER ONLY` — so the difference is visible at the moment you copy.
+**Only ManaBox has been round-tripped.** A generated file was imported into the
+real app and accepted. The rest are built from real export headers, which is
+evidence a site reads them back, not proof. Each format carries its own badge in
+the interface — `IMPORT VERIFIED`, `DOCUMENTED`, or `HEADER ONLY` — so the
+difference is visible at the moment you copy.
+
+**CSVs are written with LF endings and no trailing newline.** RFC 4180 says CRLF,
+but ManaBox splits on `\n` and keeps the `\r`, which lands on the last column of
+every line. The header becomes `Purchase price currency\r`, no column matches,
+and the entire file is rejected. Every export sampled from ManaBox, Moxfield,
+TCGplayer, and TopDecked is LF-only.
 
 ManaBox's docs enumerate the columns it accepts on import: card name, set code or
 set name, quantity, foil, collector number, language, condition, purchase price
@@ -143,10 +149,16 @@ so a new product lags its own list).
 
 Its 100 cards are all correct, but **71 printings are stand-ins**. Scryfall has
 exactly 18 cards dated 2026-08-10, all `sld`; of the 72 non-foil reprints, 36 are
-absent from The List entirely and 11 more are ambiguous. Those printings do not
-exist in any database yet, so an older printing of the same card is used, marked
-`SUB` in the interface and explained on the page. The text export matches by name
-and has no substitution problem at all.
+absent from The List entirely and 11 more are ambiguous, so those printings exist
+in no database yet.
+
+A stand-in is picked as the newest **ordinary** paper printing: Universes Beyond
+crossovers, promos, Secret Lair, tokens, digital-only, and joke sets are all
+excluded. Without that filter Scryfall's default for a name is simply its newest
+printing, which currently means Marvel and Avatar cards land in a Hatsune Miku
+deck. Stand-in rows are marked `SUB`, and the export pane offers **all 100 cards**
+or **exact printings only**, so the choice between complete and correct is the
+reader's. The text export matches by name and sidesteps it entirely.
 
 ### Known incomplete upstream
 

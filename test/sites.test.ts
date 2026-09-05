@@ -104,11 +104,13 @@ describe('every format', () => {
     for (const f of FORMATS) expect(() => f.render([], CTX), f.id).not.toThrow()
   })
 
-  it('claims documented status for ManaBox only, and never claims more', () => {
-    const documented = FORMATS.filter((f) => f.confidence === 'documented').map((f) => f.id)
-    expect(documented).toEqual(['manabox'])
-    // Nothing may claim to be import-proven until an import actually proves it.
-    for (const f of FORMATS) expect(['documented', 'header-verified']).toContain(f.confidence)
+  it('claims import-verified for ManaBox only', () => {
+    // ManaBox is the one target a generated file was actually imported into.
+    const proven = FORMATS.filter((f) => f.confidence === 'round-tripped').map((f) => f.id)
+    expect(proven).toEqual(['manabox'])
+    for (const f of FORMATS) {
+      expect(['round-tripped', 'documented', 'header-verified']).toContain(f.confidence)
+    }
   })
 
   it('never emits a carriage return, which breaks ManaBox column mapping', () => {

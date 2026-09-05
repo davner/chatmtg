@@ -28,11 +28,12 @@ export interface ExportContext {
  * How far a target has actually been proven. Only a completed import settles it,
  * so the UI shows this rather than implying every target is equally trustworthy.
  *
+ * `round-tripped`  a generated file was imported into the real app and accepted
  * `documented`     the site publishes the columns it accepts, and these match
  * `header-verified` the header came from a real export, which is evidence the
  *                   site reads it back, not proof
  */
-export type Confidence = 'documented' | 'header-verified'
+export type Confidence = 'round-tripped' | 'documented' | 'header-verified'
 
 export interface ExportFormat {
   id: string

@@ -32,6 +32,7 @@ export function SetExporter({
   const [rows, setRows] = useState<CardRow[] | null>(null)
   const [failed, setFailed] = useState(false)
   const [page, setPage] = useState(0)
+  const [includeSubs, setIncludeSubs] = useState(true)
 
   useEffect(() => {
     let live = true
@@ -50,7 +51,11 @@ export function SetExporter({
     }
   }, [source.url])
 
-  const included = useMemo(() => (rows ?? []).filter((r) => r.qty > 0), [rows])
+  const substituted = useMemo(() => (rows ?? []).filter((r) => r.substituted).length, [rows])
+  const included = useMemo(
+    () => (rows ?? []).filter((r) => r.qty > 0 && (includeSubs || !r.substituted)),
+    [rows, includeSubs],
+  )
   const exports = useMemo(
     () => renderAll(FORMATS, included, { binder }),
     [included, binder],
@@ -93,6 +98,32 @@ export function SetExporter({
       </div>
       <div className="exportcol">
         <ExportPane formats={exports} filename={filename} />
+        {substituted > 0 && (
+          <div className="subswitch">
+            <p className="field">Printings not catalogued yet</p>
+            <div className="groups" role="group" aria-label="Stand-in printings">
+              <button
+                className={`grouptab${includeSubs ? ' on' : ''}`}
+                aria-pressed={includeSubs}
+                onClick={() => setIncludeSubs(true)}
+              >
+                All {rows.reduce((n, r) => n + r.qty, 0)} cards
+              </button>
+              <button
+                className={`grouptab${includeSubs ? '' : ' on'}`}
+                aria-pressed={!includeSubs}
+                onClick={() => setIncludeSubs(false)}
+              >
+                Exact printings only
+              </button>
+            </div>
+            <p className="disclaimer" style={{ marginTop: '8px' }}>
+              {includeSubs
+                ? `${substituted} of these rows use a stand-in printing, because this product's own printings are not catalogued anywhere yet. The cards are right; those versions are not.`
+                : `Only the ${included.length} rows whose exact printing is known. Correct, but not the whole product.`}
+            </p>
+          </div>
+        )}
         <p className="disclaimer">
           Quantities start at one of each card, non-foil where the printing allows it. That
           is a starting point, not a record of what you own — set the quantity to zero for
