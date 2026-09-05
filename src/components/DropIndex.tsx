@@ -1,6 +1,7 @@
 import { animated, useReducedMotion, useTrail } from '@react-spring/web'
 import { useMemo, useState } from 'react'
 import type { DropSummary } from '../lib/types.ts'
+import { PRODUCT_SORTS, sortProducts, type ProductSort } from '../lib/sort.ts'
 
 const CHIP = { FOIL: 'foil', NONFOIL: 'nonfoil', MIXED: 'mixed' } as const
 
@@ -13,13 +14,14 @@ const PAGE = 48
 export function DropIndex({ drops, base }: { drops: DropSummary[]; base: string }) {
   const [query, setQuery] = useState('')
   const [limit, setLimit] = useState(PAGE)
+  const [sort, setSort] = useState<ProductSort>('newest')
 
   useReducedMotion()
 
   const q = query.trim().toLowerCase()
   const matching = useMemo(
-    () => (q ? drops.filter((d) => d.name.toLowerCase().includes(q)) : drops),
-    [drops, q],
+    () => sortProducts(q ? drops.filter((d) => d.name.toLowerCase().includes(q)) : drops, sort),
+    [drops, q, sort],
   )
   const shown = matching.slice(0, limit)
 
@@ -51,6 +53,23 @@ export function DropIndex({ drops, base }: { drops: DropSummary[]; base: string 
             placeholder="winter diva, marvel, artist series"
             aria-label="Search Secret Lair drops by name"
           />
+        </label>
+        <label className="sortby">
+          <span className="field">Sort</span>
+          <select
+            value={sort}
+            onChange={(e) => {
+              setLimit(PAGE)
+              setSort(e.target.value as ProductSort)
+            }}
+            aria-label="Sort order"
+          >
+            {PRODUCT_SORTS.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 

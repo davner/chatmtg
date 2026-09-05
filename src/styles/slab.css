@@ -417,3 +417,15 @@ a { text-underline-offset: 0.18em; text-decoration-thickness: from-font; }
 }
 .dropcard .when { line-height: 1.4; }
 .dropcard .row { align-items: flex-start; }
+
+.sortby { display: flex; align-items: center; gap: 8px; }
+.tablebar {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 10px 15px; border-bottom: 1px solid var(--rule-soft);
+}
+.tablebar .lookup { flex: 1 1 180px; }
+.tablebar select { flex: 0 1 auto; }
+@media (max-width: 640px) {
+  .sortby { width: 100%; }
+  .sortby select { flex: 1; }
+}

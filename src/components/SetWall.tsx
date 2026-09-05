@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { SlabTile, type TileData } from './SlabTile.tsx'
 import { DropTile } from './DropTile.tsx'
 import type { DropSummary } from '../lib/types.ts'
+import { PRODUCT_SORTS, sortProducts, type ProductSort } from '../lib/sort.ts'
 
 /**
  * Scryfall's 24 set types are too fine-grained to pick from. These groupings are
@@ -41,6 +42,7 @@ export function SetWall({
   const [query, setQuery] = useState('')
   const [group, setGroup] = useState('releases')
   const [limit, setLimit] = useState(PAGE)
+  const [sort, setSort] = useState<ProductSort>('newest')
   const [drops, setDrops] = useState<DropSummary[] | null>(presetDrops ?? null)
 
   useReducedMotion()
@@ -71,14 +73,23 @@ export function SetWall({
     })
   }, [sets, q, group, dropsTab])
 
+  const ordered = useMemo(
+    // Sets carry no card-count-free date of their own, so they sort on the same
+    // three fields products do.
+    () => sortProducts(matching.map((s) => ({ ...s, released: s.released || '0000-00-00' })), sort),
+    [matching, sort],
+  )
+
   const dropHits = useMemo(() => {
     if (!drops) return []
     if (dropsTab) return q ? drops.filter((d) => d.name.toLowerCase().includes(q)) : drops
     return q ? drops.filter((d) => d.name.toLowerCase().includes(q)).slice(0, 24) : []
   }, [drops, q, dropsTab])
 
+  const orderedDrops = useMemo(() => sortProducts(dropHits, sort), [dropHits, sort])
+
   // On the drops tab the drops are the wall, so they page like sets do.
-  const shownDrops = dropsTab ? dropHits.slice(0, limit) : dropHits
+  const shownDrops = dropsTab ? orderedDrops.slice(0, limit) : orderedDrops
 
   const dropTrail = useTrail(dropsTab ? shownDrops.length : 0, {
     from: { opacity: 0, transform: 'translateY(10px)' },
@@ -86,7 +97,7 @@ export function SetWall({
     config: { tension: 260, friction: 28 },
   })
 
-  const shown = matching.slice(0, limit)
+  const shown = ordered.slice(0, limit)
 
   const trail = useTrail(shown.length, {
     from: { opacity: 0, transform: 'translateY(10px)' },
@@ -125,6 +136,20 @@ export function SetWall({
             placeholder={dropsTab ? 'winter diva, marvel, artist series' : 'bloomburrow, blb, winter diva'}
             aria-label="Search sets and Secret Lair drops by name or code"
           />
+        </label>
+        <label className="sortby">
+          <span className="field">Sort</span>
+          <select
+            value={sort}
+            onChange={(e) => change(() => setSort(e.target.value as ProductSort))}
+            aria-label="Sort order"
+          >
+            {PRODUCT_SORTS.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </label>
         <div className="groups" role="group" aria-label="Filter sets by kind">
           {GROUPS.map((g) => (
