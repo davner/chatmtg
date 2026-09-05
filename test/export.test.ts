@@ -42,7 +42,7 @@ describe('csv quoting', () => {
 
 describe('manabox', () => {
   const out = manabox.render([GIADA], CTX)
-  const lines = out.split('\r\n')
+  const lines = out.split('\n')
 
   it('emits the exact header ManaBox exports', () => {
     expect(lines[0]).toBe(
@@ -56,14 +56,17 @@ describe('manabox', () => {
     )
   })
 
-  it('terminates with CRLF', () => {
-    expect(out.endsWith('\r\n')).toBe(true)
-    expect(lines.at(-1)).toBe('')
+  it('uses LF and no trailing newline, as ManaBox exports do', () => {
+    // A stray \r ends up on the last column of every line, the header included,
+    // and ManaBox then matches no columns and rejects the entire file.
+    expect(out).not.toContain('\r')
+    expect(out.endsWith('\n')).toBe(false)
+    expect(lines).toHaveLength(2)
   })
 
   it('spells each finish the way ManaBox does', () => {
     const foilOf = (finish: CardRow['finish']) =>
-      manabox.render([{ ...GIADA, finish }], CTX).split('\r\n')[1]!.split(',')[5]
+      manabox.render([{ ...GIADA, finish }], CTX).split('\n')[1]!.split(',')[5]
     expect(foilOf('nonfoil')).toBe('normal')
     expect(foilOf('foil')).toBe('foil')
     expect(foilOf('etched')).toBe('etched')
@@ -71,7 +74,7 @@ describe('manabox', () => {
 
   it('maps Chinese to ManaBox script codes', () => {
     const langOf = (lang: string) =>
-      manabox.render([{ ...GIADA, lang }], CTX).split('\r\n')[1]!.split(',').at(-2)
+      manabox.render([{ ...GIADA, lang }], CTX).split('\n')[1]!.split(',').at(-2)
     expect(langOf('zht')).toBe('zh_TW')
     expect(langOf('zhs')).toBe('zh_CN')
     expect(langOf('de')).toBe('de')

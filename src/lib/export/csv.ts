@@ -14,9 +14,12 @@ export function csvRow(fields: (string | number | undefined | null)[]): string {
 }
 
 /**
- * CRLF line endings, because several importers are Windows-first spreadsheet
- * tools and RFC 4180 specifies CRLF. A trailing newline closes the final record.
+ * LF endings and no trailing newline, matching what these apps export
+ * themselves. RFC 4180 says CRLF, but ManaBox splits on \n and keeps the \r,
+ * which corrupts the last column of every line — including the header, so the
+ * column mapping fails and the whole file is rejected. Every real export
+ * sampled from ManaBox, Moxfield, TCGplayer, and TopDecked is LF-only.
  */
 export function csvDocument(header: string[], rows: (string | number | undefined | null)[][]): string {
-  return [csvRow(header), ...rows.map(csvRow)].join('\r\n') + '\r\n'
+  return [csvRow(header), ...rows.map(csvRow)].join('\n')
 }

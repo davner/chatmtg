@@ -40,12 +40,12 @@ const HEADERS: Record<string, string> = {
 describe('csv adapters', () => {
   for (const [id, header] of Object.entries(HEADERS)) {
     it(`${id} emits its site's exact header`, () => {
-      expect(formatById(id).render([ROW], CTX).split('\r\n')[0]).toBe(header)
+      expect(formatById(id).render([ROW], CTX).split('\n')[0]).toBe(header)
     })
 
     it(`${id} emits one field per header column`, () => {
       const out = formatById(id).render([ROW], CTX)
-      const [head, body] = out.split('\r\n')
+      const [head, body] = out.split('\n')
       expect(countFields(body!)).toBe(countFields(head!))
     })
   }
@@ -53,7 +53,7 @@ describe('csv adapters', () => {
 
 describe('finish vocabularies', () => {
   const finishOf = (id: string, finish: CardRow['finish'], col: number) =>
-    parseRow(formatById(id).render([{ ...ROW, finish }], CTX).split('\r\n')[1]!)[col]
+    parseRow(formatById(id).render([{ ...ROW, finish }], CTX).split('\n')[1]!)[col]
 
   it('moxfield leaves non-foil blank', () => {
     expect(finishOf('moxfield', 'nonfoil', 6)).toBe('')
@@ -92,7 +92,7 @@ describe('every format', () => {
       const out = f.render([{ ...ROW, name: 'Giada, Font of Hope' }], CTX)
       if (f.kind === 'csv') {
         expect(out, f.id).toContain('"Giada, Font of Hope"')
-        const [head, body] = out.split('\r\n')
+        const [head, body] = out.split('\n')
         expect(countFields(body!), f.id).toBe(countFields(head!))
       } else {
         expect(out, f.id).toContain('Giada, Font of Hope')
@@ -109,6 +109,12 @@ describe('every format', () => {
     expect(documented).toEqual(['manabox'])
     // Nothing may claim to be import-proven until an import actually proves it.
     for (const f of FORMATS) expect(['documented', 'header-verified']).toContain(f.confidence)
+  })
+
+  it('never emits a carriage return, which breaks ManaBox column mapping', () => {
+    for (const f of FORMATS) {
+      expect(f.render([ROW], CTX), f.id).not.toContain('\r')
+    }
   })
 
   it('gives every format a unique id', () => {
