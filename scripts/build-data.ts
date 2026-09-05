@@ -127,7 +127,6 @@ async function main() {
     drops.push({
       ...manual.drop,
       commanderDeck: true,
-      substituted: manual.substituted,
       provenance: {
         name: manual.source.name,
         url: manual.source.url,
@@ -136,9 +135,9 @@ async function main() {
       },
     })
     console.log(
-      `  manual: "${manual.drop.name}" ${manual.drop.count} cards, ` +
-        `${manual.substituted} printings substituted (source: ${manual.source.name})`,
+      `  manual: "${manual.drop.name}" ${manual.drop.count} cards from ${manual.source.name}`,
     )
+    for (const c of manual.corrections) console.log(`    corrected: ${c}`)
   }
   for (const drop of drops) {
     await writeFile(join(DATA, 'drops', `${drop.slug}.json`), JSON.stringify(drop))

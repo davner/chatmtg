@@ -147,18 +147,19 @@ Commander Decks are published; this is the newest and is still pending upstream
 (mtgjson/mtg-sealed-content#512 — decklists come from a separately-scheduled job,
 so a new product lags its own list).
 
-Its 100 cards are all correct, but **71 printings are stand-ins**. Scryfall has
-exactly 18 cards dated 2026-08-10, all `sld`; of the 72 non-foil reprints, 36 are
-absent from The List entirely and 11 more are ambiguous, so those printings exist
-in no database yet.
+**Every printing is exact.** The announcement's visible text is only card names,
+but its HTML carries a `Card Name | Set Code` table — inside a JSON-escaped blob,
+so text extraction misses it. That table is the source of truth for which version
+of each reprint ships, and it is what MTGJSON itself is transcribed from.
 
-A stand-in is picked as the newest **ordinary** paper printing: Universes Beyond
-crossovers, promos, Secret Lair, tokens, digital-only, and joke sets are all
-excluded. Without that filter Scryfall's default for a name is simply its newest
-printing, which currently means Marvel and Avatar cards land in a Hatsune Miku
-deck. Stand-in rows are marked `SUB`, and the export pane offers **all 100 cards**
-or **exact printings only**, so the choice between complete and correct is the
-reader's. The text export matches by name and sidesteps it entirely.
+Set codes resolve against card data already on disk, so the build makes no extra
+API calls and cannot be rate-limited. Where a set prints a card several times,
+the ordinary printing is taken over showcase and borderless treatments, which are
+numbered above the main run.
+
+One correction is recorded in the file: the announcement lists Nykthos Paragon as
+`MH3`, but the card exists only in `MH2`. Corrections print during the build
+rather than being applied silently.
 
 ### Known incomplete upstream
 
