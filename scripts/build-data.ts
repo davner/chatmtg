@@ -55,7 +55,14 @@ async function main() {
   const cards = new Map<string, Card[]>()
   const tiles = new Map<string, ScryfallCard>()
 
+  let finishless = 0
   const total = await streamBulkCards(bulk, (c) => {
+    // A card with no finish cannot be owned in paper, and the export layer has
+    // to name a finish on every row. Three such cards sit inside paper sets.
+    if (!c.finishes?.length) {
+      finishless++
+      return
+    }
     let bucket = cards.get(c.set)
     if (!bucket) cards.set(c.set, (bucket = []))
     bucket.push({
@@ -72,6 +79,7 @@ async function main() {
     }
   })
   console.log(`  ${total} printings across ${cards.size} sets`)
+  if (finishless) console.log(`  ${finishless} skipped: no paper finish, so not ownable`)
 
   await rm(join(DATA, 'sets'), { recursive: true, force: true })
   await rm(join(DATA, 'drops'), { recursive: true, force: true })

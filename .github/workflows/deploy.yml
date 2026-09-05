@@ -32,7 +32,10 @@ jobs:
           key: scryfall-bulk-${{ github.run_id }}
           restore-keys: scryfall-bulk-
       - run: pnpm test
+      - run: pnpm check
       - run: pnpm build:data
+      # Gates the deploy on the data itself, not just the code that fetched it.
+      - run: pnpm verify:data
       - run: pnpm build
       - uses: actions/upload-pages-artifact@v4
         with:

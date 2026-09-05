@@ -107,11 +107,11 @@ export async function loadManualDecks(
   return out
 }
 
-function front(name: string): string {
+export function front(name: string): string {
   return name.split(' // ')[0]!
 }
 
-function matches(cardName: string, wanted: string): boolean {
+export function matches(cardName: string, wanted: string): boolean {
   return cardName === wanted || front(cardName) === front(wanted)
 }
 
@@ -120,6 +120,6 @@ function matches(cardName: string, wanted: string): boolean {
  * borderless treatment, which are numbered above the main run. The shortest,
  * lowest number is the ordinary printing, which is what a precon ships.
  */
-function plainest(cards: Card[]): Card | undefined {
+export function plainest(cards: Card[]): Card | undefined {
   return [...cards].sort((a, b) => a.cn.length - b.cn.length || a.cn.localeCompare(b.cn))[0]
 }

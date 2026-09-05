@@ -92,12 +92,23 @@ Requires Node >= 22.12 and pnpm.
 | `pnpm dev` | Dev server |
 | `pnpm build` | Build 1793 static pages into `dist/` |
 | `pnpm preview` | Serve `dist/` |
-| `pnpm test` | Export adapter fixture tests |
+| `pnpm test` | Unit tests: pipeline rules and every export adapter |
+| `pnpm verify:data` | 30 invariants over the built data |
 | `pnpm check` | Typecheck |
 
 `build:data` must run before `build` or `dev` — the pages read from
 `public/data/`, which is gitignored and generated. The Scryfall bulk file is
 cached in `.cache/` and reused until upstream publishes a new one.
+
+## Verifying it
+
+`pnpm test` proves the rules. `pnpm verify:data` proves the run — it inspects
+what was actually written to `public/data/` rather than the code that wrote it,
+which is what catches upstream drift. CI runs both, and `verify:data` sits
+between `build:data` and `build`, so a deploy cannot ship data that fails it.
+
+[SOURCES.md](SOURCES.md) documents every upstream source, what each one can and
+cannot answer, and the rate limits that apply.
 
 ## How it is put together
 
@@ -110,6 +121,7 @@ scripts/build-data.ts        Orchestrator
   sources/scryfall.ts        Sets index, bulk JSONL stream, icon download
   sources/mtgjson.ts         SLD.json -> 735 drops, plus 7 commander decks
   sources/manual.ts          Vendored decklists, used only while upstream lacks them
+scripts/verify-data.ts       Invariants over the built data; CI gates the deploy on it
 src/lib/export/              One adapter per collection site, each fixture-tested
 src/components/              React islands; motion is react-spring throughout
 public/data/                 Generated: sets.json, sets/<code>.json, drops/<slug>.json
