@@ -21,7 +21,8 @@
     "@react-spring/web": "10.1.2",
     "astro": "7.3.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "tar": "7.5.22"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",

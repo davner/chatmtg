@@ -10,6 +10,7 @@ import {
 } from './sources/scryfall.ts'
 import { fetchSecretLairDrops } from './sources/mtgjson.ts'
 import { loadManualDecks } from './sources/manual.ts'
+import { fetchAllDecks } from './sources/decks.ts'
 import type { Card, Finish, SetSummary } from '../src/lib/types.ts'
 
 const ROOT = new URL('..', import.meta.url).pathname
@@ -184,6 +185,38 @@ async function main() {
     console.log(`  unresolved upstream: "${u.product}" (${u.released}) -> deck "${u.deck}"`)
   }
   await writeFile(join(DATA, 'unresolved.json'), JSON.stringify(unresolved))
+
+  // Every other preconstructed product: commander decks, Jumpstart, theme
+  // decks, intro packs. Secret Lair is one family among many.
+  console.log('precon decks:')
+  const precons = (await fetchAllDecks(CACHE)).filter((d) => d.setCode !== 'sld')
+  await rm(join(DATA, 'decks'), { recursive: true, force: true })
+  await mkdir(join(DATA, 'decks'), { recursive: true })
+  for (const deck of precons) {
+    const best = [...deck.cards]
+      .filter((c) => artById.has(c.id))
+      .sort(
+        (a, b) =>
+          (RARITY[b.rarity] ?? 0) - (RARITY[a.rarity] ?? 0) ||
+          a.cn.padStart(8, '0').localeCompare(b.cn.padStart(8, '0')),
+      )[0]
+    const found = best && artById.get(best.id)
+    if (found) {
+      deck.art = found.art
+      deck.artist = found.artist
+    }
+    await writeFile(join(DATA, 'decks', `${deck.slug}.json`), JSON.stringify(deck))
+  }
+  await writeFile(
+    join(DATA, 'decks.json'),
+    JSON.stringify(precons.map(({ cards: _cards, ...rest }) => rest)),
+  )
+  const byKind = new Map<string, number>()
+  for (const d of precons) byKind.set(d.kind, (byKind.get(d.kind) ?? 0) + 1)
+  console.log(`  wrote ${precons.length} decks across ${new Set(precons.map((d) => d.setCode)).size} sets`)
+  for (const [k, n] of [...byKind].sort((a, b) => b[1] - a[1]).slice(0, 6)) {
+    console.log(`    ${k}: ${n}`)
+  }
 
   console.log('icons:')
   const n = await downloadIcons(new Set(sets.map((s) => s.icon_svg_uri)), ICONS)

@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { finishLabelOf } from '../src/lib/types.ts'
-import type { Card, DropDetail, DropSummary, SetSummary } from '../src/lib/types.ts'
+import type { Card, DeckDetail, DeckSummary, DropDetail, DropSummary, SetSummary } from '../src/lib/types.ts'
 
 /**
  * Checks the built data rather than the code that built it. The unit tests prove
@@ -248,6 +248,61 @@ async function main() {
     `got ${commanderDecks.length}`)
   for (const deck of commanderDecks) {
     check(deck.count >= 100, `${deck.slug} is a full deck`, `only ${deck.count} cards`)
+  }
+
+  // --- preconstructed decks from every other set ----------------------------
+  const decks = await read<DeckSummary[]>('decks.json')
+  check(decks.length > 2000, 'the precon catalogue is present', `only ${decks.length}`)
+  check(new Set(decks.map((d) => d.slug)).size === decks.length, 'deck slugs are unique')
+  check(decks.every((d) => d.setCode !== 'sld'), 'Secret Lair is not duplicated into the decks list')
+
+  const badDecks: string[] = []
+  const orphanSets = new Set<string>()
+  let deckCards = 0
+  for (const summary of decks) {
+    // A product set Scryfall does not carry is fine as long as the cards do
+    // resolve; only the breadcrumb has nowhere to point.
+    if (!setIndex.has(summary.setCode)) orphanSets.add(summary.setCode)
+    if (!summary.kind) badDecks.push(`${summary.slug}: no product kind`)
+    const deck = await read<DeckDetail>(`decks/${summary.slug}.json`).catch(() => null)
+    if (!deck) {
+      badDecks.push(`${summary.slug}: no detail file`)
+      continue
+    }
+    if (!deck.cards.length) badDecks.push(`${summary.slug}: no cards`)
+    const noId = deck.cards.find((c) => !c.id)
+    if (noId) badDecks.push(`${summary.slug}: "${noId.name}" has no Scryfall id`)
+    const strayCard = deck.cards.find((c) => c.setCode && !setIndex.has(c.setCode))
+    if (strayCard) {
+      badDecks.push(`${summary.slug}: "${strayCard.name}" names set ${strayCard.setCode}`)
+    }
+    const counted = deck.cards.reduce((n, c) => n + c.qty, 0)
+    if (counted !== deck.count) {
+      badDecks.push(`${summary.slug}: quantities sum to ${counted}, count says ${deck.count}`)
+    }
+    deckCards += counted
+  }
+  check(badDecks.length === 0, 'every precon deck resolves to importable cards',
+    badDecks.slice(0, 5).join('; '))
+  if (orphanSets.size) {
+    notes.push(
+      `${orphanSets.size} product sets are not in Scryfall's catalogue ` +
+        `(${[...orphanSets].join(', ')}); their cards still resolve`,
+    )
+  }
+  notes.push(
+    `${deckCards.toLocaleString()} cards across ${decks.length} precon decks in ` +
+      `${new Set(decks.map((d) => d.setCode)).size} sets`,
+  )
+
+  // The products this was built to surface, named so a regression is obvious.
+  for (const [slug, label] of [
+    ['lcc-ahoy-mateys', 'Ahoy Mateys'],
+    ['sos-lifegain', 'Lifegain'],
+    ['ecl-angels', 'Angels'],
+  ] as const) {
+    const found = decks.find((d) => d.slug === slug)
+    check(!!found && found.count > 0, `${label} is reachable`, found ? '' : 'missing')
   }
 
   // --- report ---------------------------------------------------------------

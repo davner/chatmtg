@@ -14,6 +14,7 @@ source answers which question, why, and what each one cannot tell you.
 | What is in a Secret Lair **drop**? | MTGJSON `SLD.json` `decks` |
 | Non-foil or foil edition? | MTGJSON's per-entry `isFoil` / `isEtched` |
 | What is in a Secret Lair **commander deck**? | MTGJSON `/decks/<file>.json` |
+| What is in any **other** preconstructed deck? | MTGJSON `AllDeckFiles.tar.gz` |
 | Which *printing* of a reprint ships? | The Wizards decklist announcement |
 
 ---
@@ -101,6 +102,22 @@ They are read instead from **`/api/v5/decks/<fileName>.json`**, listed in
 `DeckList.json`. Those standalone files carry whole card objects with set code,
 collector number, and Scryfall id, so no cross-set index is needed.
 
+### Every other preconstructed deck
+
+Secret Lair is one product family of many. MTGJSON publishes 3,029 decks and only
+743 are Secret Lair; the rest are commander decks, Jumpstart packs, theme decks,
+intro packs, planeswalker decks, and toolkits.
+
+Fetching those one file at a time is 2,285 requests, so the whole archive comes
+from **`AllDeckFiles.tar.gz`** (~257 MB), cached by MTGJSON's build version the
+way the Scryfall bulk file is. Each file inside carries whole card objects with
+set code, collector number, and Scryfall id.
+
+Six product set codes (`q01`–`q08`, the Challenger Decks) exist in MTGJSON but
+not in Scryfall's set list. The 22 decks under them resolve card by card and are
+kept; only their set breadcrumb has nowhere to point, and `verify:data` reports
+them as a note rather than a failure.
+
 ### What MTGJSON cannot tell you
 
 Only what it has ingested. A product released before its decklist is imported
@@ -187,7 +204,7 @@ Anything that cannot be resolved now fails the build instead.
 | Command | What it covers |
 |---|---|
 | `pnpm test` | 76 unit tests: the finish rule, slugs, name matching, printing choice, URL joining, language vocabularies, the vendored-list resolver, and every export adapter's exact bytes |
-| `pnpm verify:data` | The built data itself: 35 invariants over all 1,049 sets and 743 products |
+| `pnpm verify:data` | The built data itself: 42 invariants over 1,049 sets, 743 Secret Lair products, and 2,285 precon decks |
 | `pnpm test:upstream` | The live sources, against the assumptions below |
 | `pnpm check` | Types across the whole project |
 

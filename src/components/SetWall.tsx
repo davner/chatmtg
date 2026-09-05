@@ -2,7 +2,7 @@ import { animated, useReducedMotion, useTrail } from '@react-spring/web'
 import { useEffect, useMemo, useState } from 'react'
 import { SlabTile, type TileData } from './SlabTile.tsx'
 import { DropTile } from './DropTile.tsx'
-import type { DropSummary } from '../lib/types.ts'
+import type { DeckSummary, DropSummary } from '../lib/types.ts'
 import { PRODUCT_SORTS, sortProducts, type ProductSort } from '../lib/sort.ts'
 
 /**
@@ -44,6 +44,7 @@ export function SetWall({
   const [limit, setLimit] = useState(PAGE)
   const [sort, setSort] = useState<ProductSort>('newest')
   const [drops, setDrops] = useState<DropSummary[] | null>(presetDrops ?? null)
+  const [decks, setDecks] = useState<DeckSummary[] | null>(null)
 
   useReducedMotion()
 
@@ -60,6 +61,20 @@ export function SetWall({
       .then(setDrops)
       .catch(() => setDrops([]))
   }, [q, drops, base, searchDrops, dropsTab])
+
+  // Precon decks are products people buy by name, so the lookup reaches them.
+  useEffect(() => {
+    if (!searchDrops || decks || !q) return
+    fetch(`${base}data/decks.json`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setDecks)
+      .catch(() => setDecks([]))
+  }, [q, decks, base, searchDrops])
+
+  const deckHits = useMemo(
+    () => (q && decks ? decks.filter((d) => d.name.toLowerCase().includes(q)).slice(0, 24) : []),
+    [decks, q],
+  )
 
   const matching = useMemo(() => {
     if (dropsTab) return []
@@ -117,8 +132,8 @@ export function SetWall({
         <span className="count">
           {dropsTab
             ? `${dropHits.length.toLocaleString()} drops`
-            : matching.length === 0 && dropHits.length > 0
-              ? `${dropHits.length} drops`
+            : matching.length === 0 && (dropHits.length || deckHits.length)
+              ? `${dropHits.length + deckHits.length} products`
               : `${matching.length.toLocaleString()} sets`}
           {!dropsTab && matching.length > 0 && dropHits.length ? ` · ${dropHits.length} drops` : ''}
         </span>
@@ -195,6 +210,34 @@ export function SetWall({
         )
       ) : null}
 
+      {!dropsTab && deckHits.length > 0 && (
+        <div className="dropband">
+          <p className="field">Decks and boxes</p>
+          <div className="droplist">
+            {deckHits.map((d) => (
+              <a className="dropcard" key={d.slug} href={`${base}deck/${d.slug}/`}>
+                <div className="holo" />
+                {d.art ? (
+                  <div className="window">
+                    <img src={d.art} alt={`Art from ${d.name}`} loading="lazy" />
+                    <div className="gloss" />
+                  </div>
+                ) : null}
+                <div className="inner">
+                  <h3>{d.name}</h3>
+                  <div className="row">
+                    <span className="when">
+                      {d.setCode.toUpperCase()} · {d.kind} · {d.count} cards
+                      {d.artist ? ` · Art: ${d.artist}` : ''}
+                    </span>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!dropsTab && dropHits.length > 0 && (
         <div className="dropband">
           <p className="field">Secret Lair drops</p>
@@ -229,7 +272,7 @@ export function SetWall({
       )}
 
       {dropsTab ? null : shown.length === 0 ? (
-        dropHits.length === 0 ? (
+        dropHits.length === 0 && deckHits.length === 0 ? (
           <p className="empty">
             Nothing matches <strong>{query}</strong>. Try <code>blb</code>,{' '}
             <code>Bloomburrow</code>, or <code>Winter Diva</code>.

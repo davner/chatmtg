@@ -88,6 +88,17 @@ export interface DropDetail extends DropSummary {
   cards: DropCard[]
 }
 
+/** A preconstructed product from any set: commander deck, Jumpstart, theme deck. */
+export interface DeckSummary extends DropSummary {
+  setCode: string
+  /** MTGJSON's deck type, shown as the product's kind. */
+  kind: string
+}
+
+export interface DeckDetail extends DeckSummary {
+  cards: DropCard[]
+}
+
 /** What a product contains, from its resolved cards. */
 export function finishLabelOf(cards: { finish: Finish }[]): DropSummary['finishLabel'] {
   if (!cards.length) return 'NONFOIL'

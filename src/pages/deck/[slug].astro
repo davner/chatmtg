@@ -1,0 +1,73 @@
+---
+import Base from '../../layouts/Base.astro'
+import { SetExporter } from '../../components/SetExporter.tsx'
+import { readData } from '../../lib/data.ts'
+import { url } from '../../lib/paths.ts'
+import type { DeckSummary, SetSummary } from '../../lib/types.ts'
+
+export async function getStaticPaths() {
+  const [decks, sets] = await Promise.all([
+    readData<DeckSummary[]>('decks.json'),
+    readData<SetSummary[]>('sets.json'),
+  ])
+  const setName = new Map(sets.map((s) => [s.code, s.name]))
+  return decks.map((deck) => ({
+    params: { slug: deck.slug },
+    props: {
+      deck,
+      setName: setName.get(deck.setCode) ?? deck.setCode.toUpperCase(),
+      hasSetPage: setName.has(deck.setCode),
+    },
+  }))
+}
+
+const { deck, setName, hasSetPage } = Astro.props
+---
+
+<Base
+  title={`${deck.name} — ${setName} deck list | chatmtg`}
+  description={`The ${deck.count} cards in ${deck.name}, a ${deck.kind} from ${setName}, exportable as a ManaBox CSV or a plain text decklist.`}
+>
+  <section class="wrap">
+    <div class="pagehead">
+      <div>
+        <p class="crumb">
+          <a href={url()}>The Wall</a> /
+          {
+            hasSetPage ? (
+              <a href={url(`set/${deck.setCode}/`)}>{deck.setCode.toUpperCase()}</a>
+            ) : (
+              <span>{deck.setCode.toUpperCase()}</span>
+            )
+          } / Deck
+        </p>
+        <h2 class="pagetitle">{deck.name}</h2>
+        <div class="meta">
+          <div><span class="field">Kind</span><span class="v">{deck.kind}</span></div>
+          <div><span class="field">Set</span><span class="v">{setName}</span></div>
+          <div>
+            <span class="field">Released</span>
+            <span class="v">{deck.released || '—'}</span>
+          </div>
+          <div><span class="field">Cards</span><span class="v">{deck.count}</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="opened">
+      <SetExporter
+        client:load
+        source={{
+          kind: 'drop',
+          url: url(`data/decks/${deck.slug}.json`),
+          setCode: deck.setCode,
+          setName,
+        }}
+        binder={deck.name}
+        filename={deck.slug}
+      />
+    </div>
+  </section>
+</Base>

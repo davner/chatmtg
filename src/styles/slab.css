@@ -429,3 +429,4 @@ a { text-underline-offset: 0.18em; text-decoration-thickness: from-font; }
   .sortby { width: 100%; }
   .sortby select { flex: 1; }
 }
+.decks { margin-bottom: 30px; }

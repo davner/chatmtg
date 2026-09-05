@@ -4,7 +4,7 @@ import { SetExporter } from '../../components/SetExporter.tsx'
 import { DropIndex } from '../../components/DropIndex.tsx'
 import { readData } from '../../lib/data.ts'
 import { url } from '../../lib/paths.ts'
-import type { DropSummary, SetSummary } from '../../lib/types.ts'
+import type { DeckSummary, DropSummary, SetSummary } from '../../lib/types.ts'
 
 export async function getStaticPaths() {
   const sets = await readData<SetSummary[]>('sets.json')
@@ -17,6 +17,9 @@ const { set } = Astro.props
 // a question nobody asked. The drops themselves are the products people buy.
 const isSecretLair = set.code === 'sld'
 const drops = isSecretLair ? await readData<DropSummary[]>('drops.json') : []
+const decks = isSecretLair
+  ? []
+  : (await readData<DeckSummary[]>('decks.json')).filter((d) => d.setCode === set.code)
 ---
 
 <Base
@@ -53,6 +56,37 @@ const drops = isSecretLair ? await readData<DropSummary[]>('drops.json') : []
       isSecretLair ? (
         <DropIndex client:load drops={drops} base={url()} />
       ) : (
+        <>
+          {decks.length > 0 && (
+            <div class="decks">
+              <div class="shead">
+                <h2>Decks in this set</h2>
+                <span class="count">{decks.length}</span>
+              </div>
+              <div class="droplist">
+                {decks.map((d) => (
+                  <a class="dropcard" href={url(`deck/${d.slug}/`)}>
+                    <div class="holo" />
+                    {d.art && (
+                      <div class="window">
+                        <img src={d.art} alt={`Art from ${d.name}`} loading="lazy" />
+                        <div class="gloss" />
+                      </div>
+                    )}
+                    <div class="inner">
+                      <h3>{d.name}</h3>
+                      <div class="row">
+                        <span class="when">
+                          {d.kind} · {d.count} cards
+                          {d.artist ? ` · Art: ${d.artist}` : ''}
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         <div class="opened">
           <SetExporter
             client:load
@@ -66,6 +100,7 @@ const drops = isSecretLair ? await readData<DropSummary[]>('drops.json') : []
             filename={set.code}
           />
         </div>
+        </>
       )
     }
   </section>

@@ -1,7 +1,7 @@
 # chatmtg
 
-Pick a Magic set or a Secret Lair drop, get its card list in the format your
-collection app wants.
+Pick a Magic set, a Secret Lair drop, or any preconstructed deck, and get its
+card list in the format your collection app wants.
 
 Secret Lair drops are not sets. Every Secret Lair ever printed lives inside one
 set code, `sld` — currently 2754 cards across 204 release dates — so no card
@@ -90,10 +90,10 @@ Requires Node >= 22.12 and pnpm.
 | `pnpm install` | Install dependencies |
 | `pnpm build:data` | Fetch Scryfall and MTGJSON into `public/data/` (~50s, downloads 78 MB once) |
 | `pnpm dev` | Dev server |
-| `pnpm build` | Build 1793 static pages into `dist/` |
+| `pnpm build` | Build 4078 static pages into `dist/` |
 | `pnpm preview` | Serve `dist/` |
-| `pnpm test` | 76 unit tests: pipeline rules, the vendored-list resolver, and every export adapter |
-| `pnpm verify:data` | 35 invariants over the built data |
+| `pnpm test` | 87 unit tests: pipeline rules, sorting, the vendored-list resolver, and every export adapter |
+| `pnpm verify:data` | 42 invariants over the built data |
 | `pnpm test:upstream` | Live contract checks against Scryfall, MTGJSON, and Wizards |
 | `pnpm check` | Typecheck |
 
@@ -146,6 +146,22 @@ list in the HTML. Set pages are ~9 KB each as a result.
   sets share 365 icon files.
 - One set disagrees with Scryfall's own count: `fra` writes 49 rows against a
   `card_count` of 47. The build reports mismatches rather than hiding them.
+
+### Preconstructed decks
+
+MTGJSON publishes 3,029 decks; only 743 of them are Secret Lair. The other 2,285
+are commander decks, Jumpstart packs, theme decks, intro packs, planeswalker
+decks, and toolkits — products people buy sealed and want in a collection just
+as much.
+
+They come from `AllDeckFiles.tar.gz`, one ~257 MB download rather than 2,285
+requests, cached like the Scryfall bulk file. Each deck file carries whole card
+objects, so no cross-set index is needed. A set page lists its own decks, and
+the wall's lookup reaches them by name.
+
+Six product set codes (`q01`–`q08`, Challenger Decks) are not in Scryfall's
+catalogue. Those 22 decks still resolve card by card, so they ship; only their
+breadcrumb has nowhere to point.
 
 ### Secret Lair Commander Decks
 
