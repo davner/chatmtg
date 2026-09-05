@@ -54,7 +54,7 @@ const decks = isSecretLair
   <section class="wrap">
     {
       isSecretLair ? (
-        <DropIndex client:load drops={drops} base={url()} />
+        <DropIndex client:load drops={drops.slice(0, 48)} total={drops.length} base={url()} />
       ) : (
         <>
           {decks.length > 0 && (

@@ -6,6 +6,12 @@ import { url } from '../lib/paths.ts'
 import type { SetSummary } from '../lib/types.ts'
 
 const sets = await readData<SetSummary[]>('sets.json')
+
+// The wall opens on Releases, so the server-rendered seed has to be that view's
+// first page. Seeding from the whole catalogue would leave it mostly filtered
+// away before the rest arrives.
+const RELEASES = ['expansion', 'core', 'masters', 'draft_innovation', 'commander', 'starter']
+const releases = sets.filter((s) => !s.digital && RELEASES.includes(s.type))
 const paper = sets.filter((s) => !s.digital)
 const printings = paper.reduce((n, s) => n + s.count, 0)
 const paperCount = paper.length
@@ -20,6 +26,12 @@ const paperCount = paper.length
   </p>
 
   <section class="wrap">
-    <SetWall client:load sets={sets} base={url()} />
+    <SetWall
+      client:load
+      sets={releases.slice(0, 60)}
+      total={paperCount}
+      seedCount={releases.length}
+      base={url()}
+    />
   </section>
 </Base>

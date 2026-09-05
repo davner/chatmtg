@@ -72,7 +72,7 @@ export function SetExporter({
 
   if (failed) {
     return (
-      <div className="panelbox">
+      <div className="panelbox loadingpanel">
         <div className="holo" />
         <p className="empty" style={{ padding: '16px 15px' }}>
           The card list did not load. Try reloading.
@@ -81,9 +81,11 @@ export function SetExporter({
     )
   }
 
+  // .loadingpanel holds the height the table is about to take, so the page does
+  // not jump when the card list lands.
   if (!rows) {
     return (
-      <div className="panelbox">
+      <div className="panelbox loadingpanel">
         <div className="holo" />
         <p className="empty" style={{ padding: '16px 15px' }}>Loading…</p>
       </div>

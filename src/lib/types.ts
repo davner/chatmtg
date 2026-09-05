@@ -66,6 +66,8 @@ export interface DropSummary {
   substituted?: number
   /** True for a 100-card Secret Lair Commander Deck rather than a drop. */
   commanderDeck?: boolean
+  /** True for a superdrop bundle: several drops sold as one purchase. */
+  bundle?: boolean
   /** Art from a card in this drop, with the credit Scryfall's terms require. */
   art?: string
   artist?: string

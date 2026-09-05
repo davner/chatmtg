@@ -1,5 +1,5 @@
 import { animated, useReducedMotion, useTrail } from '@react-spring/web'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { DropSummary } from '../lib/types.ts'
 import { PRODUCT_SORTS, sortProducts, type ProductSort } from '../lib/sort.ts'
 
@@ -11,7 +11,18 @@ const PAGE = 48
  * 735 drops is far too many to scroll, and this page is where the wall sends
  * every Secret Lair visitor, so it carries its own lookup.
  */
-export function DropIndex({ drops, base }: { drops: DropSummary[]; base: string }) {
+export function DropIndex({
+  drops: seed,
+  total,
+  base,
+}: {
+  /** The first screenful, server-rendered. The rest arrives on demand. */
+  drops: DropSummary[]
+  total: number
+  base: string
+}) {
+  const [all, setAll] = useState<DropSummary[] | null>(null)
+  const drops = all ?? seed
   const [query, setQuery] = useState('')
   const [limit, setLimit] = useState(PAGE)
   const [sort, setSort] = useState<ProductSort>('newest')
@@ -19,6 +30,16 @@ export function DropIndex({ drops, base }: { drops: DropSummary[]; base: string 
   useReducedMotion()
 
   const q = query.trim().toLowerCase()
+
+  // 743 drops is 372 KB of markup nobody has asked for yet.
+  const needAll = Boolean(q) || sort !== 'newest' || limit > PAGE
+  useEffect(() => {
+    if (!needAll || all) return
+    fetch(`${base}data/drops.json`)
+      .then((r) => (r.ok ? r.json() : seed))
+      .then(setAll)
+      .catch(() => setAll(seed))
+  }, [needAll, all, base, seed])
   const matching = useMemo(
     () => sortProducts(q ? drops.filter((d) => d.name.toLowerCase().includes(q)) : drops, sort),
     [drops, q, sort],
@@ -26,8 +47,8 @@ export function DropIndex({ drops, base }: { drops: DropSummary[]; base: string 
   const shown = matching.slice(0, limit)
 
   const trail = useTrail(shown.length, {
-    from: { opacity: 0, transform: 'translateY(8px)' },
-    to: { opacity: 1, transform: 'translateY(0px)' },
+    from: { transform: 'translateY(8px)' },
+    to: { transform: 'translateY(0px)' },
     config: { tension: 280, friction: 28 },
   })
 
@@ -35,7 +56,9 @@ export function DropIndex({ drops, base }: { drops: DropSummary[]; base: string 
     <>
       <div className="shead">
         <h2>Drops</h2>
-        <span className="count">{matching.length.toLocaleString()} drops</span>
+        <span className="count">
+          {(all ? matching.length : total).toLocaleString()} drops
+        </span>
       </div>
 
       <div className="controls">
@@ -114,11 +137,9 @@ export function DropIndex({ drops, base }: { drops: DropSummary[]; base: string 
               )
             })}
           </div>
-          {shown.length < matching.length ? (
+          {shown.length < (all ? matching.length : total) ? (
             <div className="more">
-              <button onClick={() => setLimit((n) => n + PAGE)}>
-                Show {Math.min(PAGE, matching.length - shown.length)} more
-              </button>
+              <button onClick={() => setLimit((n) => n + PAGE)}>Show more</button>
             </div>
           ) : null}
         </>

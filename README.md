@@ -90,7 +90,7 @@ Requires Node >= 22.12 and pnpm.
 | `pnpm install` | Install dependencies |
 | `pnpm build:data` | Fetch Scryfall and MTGJSON into `public/data/` (~50s, downloads 78 MB once) |
 | `pnpm dev` | Dev server |
-| `pnpm build` | Build 4078 static pages into `dist/` |
+| `pnpm build` | Build the static site into `dist/` (~4200 pages) |
 | `pnpm preview` | Serve `dist/` |
 | `pnpm test` | 87 unit tests: pipeline rules, sorting, the vendored-list resolver, and every export adapter |
 | `pnpm verify:data` | 42 invariants over the built data |
@@ -100,6 +100,19 @@ Requires Node >= 22.12 and pnpm.
 `build:data` must run before `build` or `dev` — the pages read from
 `public/data/`, which is gitignored and generated. The Scryfall bulk file is
 cached in `.cache/` and reused until upstream publishes a new one.
+
+## Loading
+
+Only the first screenful is server-rendered. The wall ships 60 sets and the
+Secret Lair index 48 drops; the full catalogue is fetched the moment someone
+searches, filters, sorts, or asks for more. That took the home page from 632 KB
+to 100 KB of markup, and the Secret Lair page from 372 KB to 60 KB.
+
+Entrance animations move rather than fade. Fading text renders it below 4.5:1
+contrast for the length of the fade, which an audit catches and a reader on a
+slow device notices.
+
+Lighthouse on mobile: accessibility, best practices, and SEO all 100.
 
 ## Verifying it
 
@@ -146,6 +159,17 @@ list in the HTML. Set pages are ~9 KB each as a result.
   sets share 365 icon files.
 - One set disagrees with Scryfall's own count: `fra` writes 49 rows against a
   `card_count` of 47. The build reports mismatches rather than hiding them.
+
+### Everything Secret Lair sells
+
+Beyond the 735 named drops, three product shapes would otherwise be unreachable
+and are resolved too: the 8 commander decks, 15 single-card promo and
+replacement packs whose contents are loose cards rather than a deck, and 113
+superdrop bundles, which are several drops sold as one purchase and can nest
+inside each other. A bundle resolves recursively into the union of its members,
+so one purchase is one import. 22 products carry no release date upstream; a
+bundle borrows the date of the drops inside it, and the rest are listed undated
+rather than hidden.
 
 ### Preconstructed decks
 

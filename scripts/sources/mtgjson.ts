@@ -1,5 +1,5 @@
 import { finishLabelOf } from '../../src/lib/types.ts'
-import type { DropDetail, Finish } from '../../src/lib/types.ts'
+import type { DropCard, DropDetail, Finish } from '../../src/lib/types.ts'
 
 const SLD_URL = 'https://mtgjson.com/api/v5/SLD.json'
 
@@ -50,15 +50,22 @@ interface DeckListEntry {
   type: string
 }
 
+interface SealedProduct {
+  name: string
+  subtype?: string
+  releaseDate?: string
+  contents?: {
+    deck?: { name: string }[]
+    card?: { name: string; number?: string; set?: string; uuid?: string; foil?: boolean }[]
+    sealed?: { count: number; name: string }[]
+  }
+}
+
 interface SldPayload {
   data: {
     cards: MtgjsonCard[]
     decks: MtgjsonDeck[]
-    sealedProduct: {
-      name: string
-      releaseDate?: string
-      contents?: { deck?: { name: string }[] }
-    }[]
+    sealedProduct: SealedProduct[]
   }
 }
 
@@ -192,6 +199,106 @@ export async function fetchSecretLairDrops(): Promise<SldResult> {
       // one that never existed.
       incomplete: cards.length ? undefined : 'MTGJSON lists this drop but has not published its card list.',
       cards,
+    })
+  }
+
+  // Products that ship loose cards rather than a deck: single-card promos and
+  // replacement packs. Nothing else reaches them, so they would be invisible.
+  const byUuidAll = byUuid
+  const dropByDeckName = new Map(drops.map((d) => [d.name, d]))
+  for (const product of data.sealedProduct) {
+    const loose = product.contents?.card
+    if (!loose?.length || product.contents?.deck?.length) continue
+    const cards: DropCard[] = []
+    for (const entry of loose) {
+      const card = entry.uuid ? byUuidAll.get(entry.uuid) : undefined
+      if (!card?.identifiers.scryfallId) continue
+      cards.push({
+        id: card.identifiers.scryfallId,
+        name: card.name,
+        cn: card.number,
+        rarity: card.rarity,
+        finishes: (card.finishes ?? ['nonfoil']) as Finish[],
+        lang: 'en',
+        setCode: 'sld',
+        finish: entry.foil ? 'foil' : 'nonfoil',
+        qty: 1,
+      })
+    }
+    if (!cards.length) continue
+    const name = product.name.replace(/^Secret Lair (Drop )?/, '')
+    let slug = slugify(name)
+    if (seen.has(slug)) slug = `${slug}-promo`
+    if (seen.has(slug)) continue
+    seen.add(slug)
+    drops.push({
+      slug,
+      name,
+      released: product.releaseDate ?? '',
+      count: cards.reduce((n, c) => n + c.qty, 0),
+      allFoil: cards.every((c) => c.finish !== 'nonfoil'),
+      finishLabel: finishLabelOf(cards),
+      cards,
+    })
+    dropByDeckName.set(name, drops[drops.length - 1]!)
+  }
+
+  // A superdrop bundle is several drops sold together, and bundles can contain
+  // bundles. Resolving one gives a single import for what was a single purchase.
+  const productByName = new Map(data.sealedProduct.map((p) => [p.name, p]))
+  const resolveBundle = (
+    product: SealedProduct,
+    depth = 0,
+    into: DropCard[] = [],
+  ): DropCard[] => {
+    if (depth > 4) return into
+    for (const deckRef of product.contents?.deck ?? []) {
+      const drop = dropByDeckName.get(deckRef.name)
+      if (drop) into.push(...drop.cards)
+    }
+    for (const member of product.contents?.sealed ?? []) {
+      const inner = productByName.get(member.name)
+      if (inner && inner !== product) resolveBundle(inner, depth + 1, into)
+    }
+    return into
+  }
+
+  for (const product of data.sealedProduct) {
+    if (product.subtype !== 'secret_lair_bundle') continue
+    const cards = resolveBundle(product)
+    if (!cards.length) continue
+
+    // The same card can arrive from two members of one bundle.
+    const merged = new Map<string, DropCard>()
+    for (const c of cards) {
+      const key = `${c.id}|${c.finish}`
+      const seenCard = merged.get(key)
+      if (seenCard) seenCard.qty += c.qty
+      else merged.set(key, { ...c })
+    }
+    const list = [...merged.values()]
+
+    const name = product.name.replace(/^Secret Lair Bundle /, '')
+    let slug = slugify(`bundle ${name}`)
+    if (seen.has(slug)) continue
+    seen.add(slug)
+
+    // Some bundles carry no date upstream. The drops inside were all sold in the
+    // same superdrop window, so the earliest of them is the bundle's date.
+    const memberDates = (product.contents?.deck ?? [])
+      .map((d) => dropByDeckName.get(d.name)?.released)
+      .filter((d): d is string => Boolean(d))
+      .sort()
+
+    drops.push({
+      slug,
+      name,
+      released: product.releaseDate ?? memberDates[0] ?? '',
+      count: list.reduce((n, c) => n + c.qty, 0),
+      allFoil: list.every((c) => c.finish !== 'nonfoil'),
+      finishLabel: finishLabelOf(list),
+      bundle: true,
+      cards: list,
     })
   }
 

@@ -121,6 +121,7 @@ async function main() {
   const crossRef: string[] = []
   const labelWrong: string[] = []
   const badDates: string[] = []
+  const undatedProducts = new Set<string>()
   const badProvenance: string[] = []
   const byName = new Map<string, DropDetail>()
 
@@ -129,9 +130,10 @@ async function main() {
     if (!drop) continue
     byName.set(drop.name, drop)
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(drop.released)) {
+    if (drop.released && !/^\d{4}-\d{2}-\d{2}$/.test(drop.released)) {
       badDates.push(`${drop.slug}: released "${drop.released}"`)
     }
+    if (!drop.released) undatedProducts.add(drop.slug)
     if (drop.provenance && !(drop.provenance.url && drop.provenance.retrieved)) {
       badProvenance.push(`${drop.slug}: provenance without a url and date`)
     }
@@ -163,6 +165,9 @@ async function main() {
   check(labelWrong.length === 0, 'every finish label matches its own cards',
     labelWrong.slice(0, 5).join('; '))
   check(badDates.length === 0, 'every release date is a real date', badDates.slice(0, 3).join('; '))
+  if (undatedProducts.size) {
+    notes.push(`${undatedProducts.size} products carry no release date upstream`)
+  }
   check(badProvenance.length === 0, 'a vendored list always says where it came from',
     badProvenance.slice(0, 3).join('; '))
 

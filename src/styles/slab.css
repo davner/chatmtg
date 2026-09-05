@@ -430,3 +430,7 @@ a { text-underline-offset: 0.18em; text-decoration-thickness: from-font; }
   .sortby select { flex: 1; }
 }
 .decks { margin-bottom: 30px; }
+
+/* Reserve the incoming table's height; without it the page shifts on load. */
+.loadingpanel { min-height: 70vh; }
+@media (max-width: 640px) { .loadingpanel { min-height: 60vh; } }

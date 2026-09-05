@@ -22,23 +22,36 @@ const CHIP = { FOIL: 'foil', NONFOIL: 'nonfoil', MIXED: 'mixed' } as const
 const PAGE = 60
 
 export function SetWall({
-  sets,
+  sets: seed,
+  total,
+  seedCount,
   base,
   hrefFor,
   searchDrops = true,
   presetDrops,
 }: {
+  /** The first screenful, server-rendered. The rest arrives on demand. */
   sets: TileData[]
+  total?: number
+  /** How many sets the seeded view really holds, before the rest is fetched. */
+  seedCount?: number
   base: string
   hrefFor?: (set: TileData) => string
   searchDrops?: boolean
   /** Preloaded drops, for a page that cannot fetch. */
   presetDrops?: DropSummary[]
 }) {
+  const [all, setAll] = useState<TileData[] | null>(null)
+  const sets = all ?? seed
+
   // The wall hides digital-only sets until they are searched for, so the
   // denominator counts the same population the masthead does. Two different
-  // set totals on one screen is the page arguing with itself.
-  const paperTotal = useMemo(() => sets.filter((s) => !s.digital).length, [sets])
+  // set totals on one screen is the page arguing with itself. The server knows
+  // it up front; the seed alone would undercount.
+  const paperTotal = useMemo(
+    () => total ?? sets.filter((s) => !s.digital).length,
+    [total, sets],
+  )
   const [query, setQuery] = useState('')
   const [group, setGroup] = useState('releases')
   const [limit, setLimit] = useState(PAGE)
@@ -49,6 +62,17 @@ export function SetWall({
   useReducedMotion()
 
   const q = query.trim().toLowerCase()
+
+  // The full catalogue is only needed once someone searches, filters, or asks
+  // for more than the first page.
+  const needAll = Boolean(q) || group !== 'releases' || limit > PAGE
+  useEffect(() => {
+    if (!needAll || all) return
+    fetch(`${base}data/sets.json`)
+      .then((r) => (r.ok ? r.json() : seed))
+      .then(setAll)
+      .catch(() => setAll(seed))
+  }, [needAll, all, base, seed])
 
   const dropsTab = GROUPS.find((g) => g.id === group)?.drops === true
 
@@ -107,16 +131,16 @@ export function SetWall({
   const shownDrops = dropsTab ? orderedDrops.slice(0, limit) : orderedDrops
 
   const dropTrail = useTrail(dropsTab ? shownDrops.length : 0, {
-    from: { opacity: 0, transform: 'translateY(10px)' },
-    to: { opacity: 1, transform: 'translateY(0px)' },
+    from: { transform: 'translateY(10px)' },
+    to: { transform: 'translateY(0px)' },
     config: { tension: 260, friction: 28 },
   })
 
   const shown = ordered.slice(0, limit)
 
   const trail = useTrail(shown.length, {
-    from: { opacity: 0, transform: 'translateY(10px)' },
-    to: { opacity: 1, transform: 'translateY(0px)' },
+    from: { transform: 'translateY(10px)' },
+    to: { transform: 'translateY(0px)' },
     config: { tension: 260, friction: 28 },
   })
 
@@ -134,7 +158,11 @@ export function SetWall({
             ? `${dropHits.length.toLocaleString()} drops`
             : matching.length === 0 && (dropHits.length || deckHits.length)
               ? `${dropHits.length + deckHits.length} products`
-              : `${matching.length.toLocaleString()} sets`}
+              : // While seeded, the seed's length is a page, not a total.
+                `${(all || q || group !== 'releases'
+                  ? matching.length
+                  : (seedCount ?? paperTotal)
+                ).toLocaleString()} sets`}
           {!dropsTab && matching.length > 0 && dropHits.length ? ` · ${dropHits.length} drops` : ''}
         </span>
       </div>
@@ -294,11 +322,9 @@ export function SetWall({
               )
             })}
           </div>
-          {shown.length < matching.length ? (
+          {shown.length < (all ? matching.length : (seedCount ?? matching.length)) ? (
             <div className="more">
-              <button onClick={() => setLimit((n) => n + PAGE)}>
-                Show {Math.min(PAGE, matching.length - shown.length)} more
-              </button>
+              <button onClick={() => setLimit((n) => n + PAGE)}>Show more</button>
             </div>
           ) : null}
         </>
