@@ -66,6 +66,9 @@ export interface DropSummary {
   substituted?: number
   /** True for a 100-card Secret Lair Commander Deck rather than a drop. */
   commanderDeck?: boolean
+  /** Art from a card in this drop, with the credit Scryfall's terms require. */
+  art?: string
+  artist?: string
 }
 
 export interface DropCard extends Card {

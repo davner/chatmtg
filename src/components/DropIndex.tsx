@@ -71,11 +71,18 @@ export function DropIndex({ drops, base }: { drops: DropSummary[]; base: string 
                   style={style}
                 >
                   <div className="holo" />
+                  {d.art ? (
+                    <div className="window">
+                      <img src={d.art} alt={`Art from ${d.name}`} loading="lazy" />
+                      <div className="gloss" />
+                    </div>
+                  ) : null}
                   <div className="inner">
                     <h3>{d.name}</h3>
                     <div className="row">
                       <span className="when">
                         {d.released} · {d.count} cards
+                        {d.artist ? ` · Art: ${d.artist}` : ''}
                       </span>
                       {d.incomplete ? (
                         <span className="chip struck">STRUCK</span>

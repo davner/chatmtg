@@ -54,6 +54,9 @@ async function main() {
   const bulk = await ensureBulkFile(CACHE)
   const cards = new Map<string, Card[]>()
   const tiles = new Map<string, ScryfallCard>()
+  // A drop's art has to come from one of its own cards, which are only known
+  // once MTGJSON resolves them, so the art is kept by card id during the stream.
+  const artById = new Map<string, { art: string; artist?: string }>()
 
   let finishless = 0
   const total = await streamBulkCards(bulk, (c) => {
@@ -73,7 +76,9 @@ async function main() {
       finishes: c.finishes as Finish[],
       lang: c.lang,
     })
-    if (artOf(c)) {
+    const art = artOf(c)
+    if (art) {
+      artById.set(c.id, { art, artist: c.artist ?? c.card_faces?.[0]?.artist })
       const best = tiles.get(c.set)
       tiles.set(c.set, best ? betterTile(best, c) : c)
     }
@@ -119,6 +124,8 @@ async function main() {
   console.log(`  wrote ${summaries.length} set files`)
   console.log(`  ${mismatches.length} sets differ from Scryfall's card_count`)
 
+  const RARITY = RARITY_RANK
+
   console.log('secret lair drops:')
   const { drops, unresolved } = await fetchSecretLairDrops()
   console.log(`  ${drops.length} from MTGJSON`)
@@ -147,6 +154,24 @@ async function main() {
     )
     for (const c of manual.corrections) console.log(`    corrected: ${c}`)
   }
+  // Art is assigned before the files are written, or the summaries ship blank.
+  let withArt = 0
+  for (const drop of drops) {
+    const best = [...drop.cards]
+      .filter((c) => artById.has(c.id))
+      .sort(
+        (a, b) =>
+          (RARITY[b.rarity] ?? 0) - (RARITY[a.rarity] ?? 0) ||
+          a.cn.padStart(8, '0').localeCompare(b.cn.padStart(8, '0')),
+      )[0]
+    const found = best && artById.get(best.id)
+    if (found) {
+      drop.art = found.art
+      drop.artist = found.artist
+      withArt++
+    }
+  }
+
   for (const drop of drops) {
     await writeFile(join(DATA, 'drops', `${drop.slug}.json`), JSON.stringify(drop))
   }
@@ -154,7 +179,7 @@ async function main() {
     join(DATA, 'drops.json'),
     JSON.stringify(drops.map(({ cards: _cards, ...rest }) => rest)),
   )
-  console.log(`  wrote ${drops.length} drops`)
+  console.log(`  wrote ${drops.length} drops, ${withArt} with art`)
   for (const u of unresolved) {
     console.log(`  unresolved upstream: "${u.product}" (${u.released}) -> deck "${u.deck}"`)
   }

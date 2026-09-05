@@ -392,9 +392,12 @@ a { text-underline-offset: 0.18em; text-decoration-thickness: from-font; }
 
 .chip.mixed { color: var(--holo-b); }
 
-/* A drop has no art of its own, so its slab is label and fine print only. */
-.dropslab .labelbar { border-bottom: 0; }
+/* A drop's art comes from one of its own cards. Without one the label carries
+   the tile alone, so the border has to close it. */
+.dropslab .labelbar { border-bottom: 1px solid var(--label-rule); }
+.dropslab .labelbar:last-of-type { border-bottom: 0; }
 .dropslab .fineprint { border-top: 1px solid var(--label-rule); }
+.dropcard .window { aspect-ratio: 21 / 9; }
 .dropslab .attr .v { white-space: nowrap; font-size: 11px; }
 .dropslab .setname { min-height: 2.2em; }
 
@@ -412,3 +415,5 @@ a { text-underline-offset: 0.18em; text-decoration-thickness: from-font; }
   .wall { gap: 14px; }
   .disclaimer { margin-top: 10px; }
 }
+.dropcard .when { line-height: 1.4; }
+.dropcard .row { align-items: flex-start; }

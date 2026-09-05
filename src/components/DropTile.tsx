@@ -55,9 +55,15 @@ export function DropTile({ drop, href }: { drop: DropSummary; href: string }) {
           </div>
         </div>
       </div>
+      {drop.art ? (
+        <div className="window">
+          <img src={drop.art} alt={`Art from ${drop.name}`} loading="lazy" />
+          <div className="gloss" />
+        </div>
+      ) : null}
       <div className="fineprint">
-        <span>{drop.commanderDeck ? 'Commander deck' : 'Secret Lair drop'}</span>
-        <span className="cert">SLD</span>
+        <span>{drop.artist ? `Art: ${drop.artist}` : 'Secret Lair drop'}</span>
+        <span className="cert">{drop.commanderDeck ? 'DECK' : 'SLD'}</span>
       </div>
     </animated.a>
   )
