@@ -1,6 +1,7 @@
 import { useReducedMotion } from '@react-spring/web'
 import { useEffect, useMemo, useState } from 'react'
 import { CardTable } from './CardTable.tsx'
+import { Skeleton } from './Skeleton.tsx'
 import { ExportPane } from './ExportPane.tsx'
 import { FORMATS } from '../lib/export/index.ts'
 import { renderAll } from '../lib/export/render.ts'
@@ -81,16 +82,9 @@ export function SetExporter({
     )
   }
 
-  // .loadingpanel holds the height the table is about to take, so the page does
+  // The skeleton holds the height the table is about to take, so the page does
   // not jump when the card list lands.
-  if (!rows) {
-    return (
-      <div className="panelbox loadingpanel">
-        <div className="holo" />
-        <p className="empty" style={{ padding: '16px 15px' }}>Loading…</p>
-      </div>
-    )
-  }
+  if (!rows) return <Skeleton rows={10} label="Loading the card list" />
 
   return (
     <>

@@ -9,11 +9,12 @@ import { PRODUCT_SORTS, sortProducts, type ProductSort } from '../lib/sort.ts'
  * Scryfall's 24 set types are too fine-grained to pick from. These groupings are
  * how a collector describes what they bought.
  */
-const GROUPS: { id: string; label: string; types?: string[]; drops?: boolean }[] = [
+const GROUPS: { id: string; label: string; types?: string[]; drops?: boolean; precons?: boolean }[] = [
   { id: 'releases', label: 'Releases', types: ['expansion', 'core', 'masters', 'draft_innovation', 'commander', 'starter'] },
   { id: 'secret-lair', label: 'Secret Lair', drops: true },
-  { id: 'decks', label: 'Decks & boxes', types: ['duel_deck', 'from_the_vault', 'premium_deck', 'spellbook', 'arsenal', 'planechase', 'archenemy'] },
+  { id: 'boxsets', label: 'Box sets', types: ['duel_deck', 'from_the_vault', 'premium_deck', 'spellbook', 'arsenal', 'planechase', 'archenemy'] },
   { id: 'promos', label: 'Promos & tokens', types: ['promo', 'token', 'memorabilia', 'masterpiece'] },
+  { id: 'precons', label: 'Decks & packs', precons: true },
   { id: 'all', label: 'Everything' },
 ]
 
@@ -58,6 +59,7 @@ export function SetWall({
   const [sort, setSort] = useState<ProductSort>('newest')
   const [drops, setDrops] = useState<DropSummary[] | null>(presetDrops ?? null)
   const [decks, setDecks] = useState<DeckSummary[] | null>(null)
+  const [kind, setKind] = useState('all')
 
   useReducedMotion()
 
@@ -75,6 +77,7 @@ export function SetWall({
   }, [needAll, all, base, seed])
 
   const dropsTab = GROUPS.find((g) => g.id === group)?.drops === true
+  const preconTab = GROUPS.find((g) => g.id === group)?.precons === true
 
   // People search for the name printed on the box — "Winter Diva", not "SLD".
   // Those are drops inside one set, so the lookup has to reach past sets.
@@ -88,20 +91,35 @@ export function SetWall({
 
   // Precon decks are products people buy by name, so the lookup reaches them.
   useEffect(() => {
-    if (!searchDrops || decks || !q) return
+    if (!searchDrops || decks || (!q && !preconTab)) return
     fetch(`${base}data/decks.json`)
       .then((r) => (r.ok ? r.json() : []))
       .then(setDecks)
       .catch(() => setDecks([]))
-  }, [q, decks, base, searchDrops])
+  }, [q, decks, base, searchDrops, preconTab])
 
-  const deckHits = useMemo(
-    () => (q && decks ? decks.filter((d) => d.name.toLowerCase().includes(q)).slice(0, 24) : []),
-    [decks, q],
-  )
+  const deckHits = useMemo(() => {
+    if (!decks) return []
+    if (preconTab) {
+      return decks.filter(
+        (d) => (kind === 'all' || d.kind === kind) && (!q || d.name.toLowerCase().includes(q)),
+      )
+    }
+    return q ? decks.filter((d) => d.name.toLowerCase().includes(q)).slice(0, 24) : []
+  }, [decks, q, preconTab, kind])
+
+  // MTGJSON names 46 product types. Listing them by frequency puts the ones
+  // people actually buy at the top of the menu.
+  const kinds = useMemo(() => {
+    const tally = new Map<string, number>()
+    for (const d of decks ?? []) tally.set(d.kind, (tally.get(d.kind) ?? 0) + 1)
+    return [...tally].sort((a, b) => b[1] - a[1])
+  }, [decks])
+
+  const shownDecks = preconTab ? deckHits.slice(0, limit) : deckHits
 
   const matching = useMemo(() => {
-    if (dropsTab) return []
+    if (dropsTab || preconTab) return []
     const types = GROUPS.find((g) => g.id === group)?.types
     return sets.filter((s) => {
       // Digital-only sets cannot be bought as cards, so they stay out unless searched for.
@@ -110,7 +128,7 @@ export function SetWall({
       if (!q) return true
       return s.name.toLowerCase().includes(q) || s.code.includes(q)
     })
-  }, [sets, q, group, dropsTab])
+  }, [sets, q, group, dropsTab, preconTab])
 
   const ordered = useMemo(
     // Sets carry no card-count-free date of their own, so they sort on the same
@@ -154,7 +172,9 @@ export function SetWall({
       <div className="shead">
         <h2>The Wall</h2>
         <span className="count">
-          {dropsTab
+          {preconTab
+            ? `${deckHits.length.toLocaleString()} products`
+            : dropsTab
             ? `${dropHits.length.toLocaleString()} drops`
             : matching.length === 0 && (dropHits.length || deckHits.length)
               ? `${dropHits.length + deckHits.length} products`
@@ -194,6 +214,23 @@ export function SetWall({
             ))}
           </select>
         </label>
+        {preconTab && kinds.length > 1 ? (
+          <label className="sortby">
+            <span className="field">Kind</span>
+            <select
+              value={kind}
+              onChange={(e) => change(() => setKind(e.target.value))}
+              aria-label="Filter by product kind"
+            >
+              <option value="all">All kinds</option>
+              {kinds.map(([k, n]) => (
+                <option key={k} value={k}>
+                  {k} ({n})
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <div className="groups" role="group" aria-label="Filter sets by kind">
           {GROUPS.map((g) => (
             <button
@@ -238,9 +275,49 @@ export function SetWall({
         )
       ) : null}
 
-      {!dropsTab && deckHits.length > 0 && (
+      {preconTab ? (
+        decks === null ? (
+          <p className="empty">Loading…</p>
+        ) : shownDecks.length === 0 ? (
+          <p className="empty">
+            Nothing matches <strong>{query || kind}</strong>.
+          </p>
+        ) : (
+          <>
+            <div className="droplist">
+              {shownDecks.map((d) => (
+                <a className="dropcard" key={d.slug} href={`${base}deck/${d.slug}/`}>
+                  <div className="holo" />
+                  {d.art ? (
+                    <div className="window">
+                      <img src={d.art} alt={`Art from ${d.name}`} loading="lazy" />
+                      <div className="gloss" />
+                    </div>
+                  ) : null}
+                  <div className="inner">
+                    <h3>{d.name}</h3>
+                    <div className="row">
+                      <span className="when">
+                        {d.setCode.toUpperCase()} · {d.kind} · {d.count} cards
+                        {d.artist ? ` · Art: ${d.artist}` : ''}
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+            {shownDecks.length < deckHits.length ? (
+              <div className="more">
+                <button onClick={() => setLimit((n) => n + PAGE)}>Show more</button>
+              </div>
+            ) : null}
+          </>
+        )
+      ) : null}
+
+      {!dropsTab && !preconTab && deckHits.length > 0 && (
         <div className="dropband">
-          <p className="field">Decks and boxes</p>
+          <p className="field">Decks and packs</p>
           <div className="droplist">
             {deckHits.map((d) => (
               <a className="dropcard" key={d.slug} href={`${base}deck/${d.slug}/`}>
@@ -299,7 +376,7 @@ export function SetWall({
         </div>
       )}
 
-      {dropsTab ? null : shown.length === 0 ? (
+      {dropsTab || preconTab ? null : shown.length === 0 ? (
         dropHits.length === 0 && deckHits.length === 0 ? (
           <p className="empty">
             Nothing matches <strong>{query}</strong>. Try <code>blb</code>,{' '}

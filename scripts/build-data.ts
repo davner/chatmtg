@@ -189,7 +189,14 @@ async function main() {
   // Every other preconstructed product: commander decks, Jumpstart, theme
   // decks, intro packs. Secret Lair is one family among many.
   console.log('precon decks:')
-  const precons = (await fetchAllDecks(CACHE)).filter((d) => d.setCode !== 'sld')
+  const digitalSets = new Set(sets.filter((s) => s.digital).map((s) => s.code))
+  const allPrecons = (await fetchAllDecks(CACHE)).filter((d) => d.setCode !== 'sld')
+  // A product whose every card is digital-only cannot be owned in paper, so it
+  // has no place in a collection import.
+  const precons = allPrecons.filter(
+    (d) => !d.cards.every((c) => c.setCode && digitalSets.has(c.setCode)),
+  )
+  const dropped = allPrecons.length - precons.length
   await rm(join(DATA, 'decks'), { recursive: true, force: true })
   await mkdir(join(DATA, 'decks'), { recursive: true })
   for (const deck of precons) {
@@ -214,6 +221,7 @@ async function main() {
   const byKind = new Map<string, number>()
   for (const d of precons) byKind.set(d.kind, (byKind.get(d.kind) ?? 0) + 1)
   console.log(`  wrote ${precons.length} decks across ${new Set(precons.map((d) => d.setCode)).size} sets`)
+  if (dropped) console.log(`  ${dropped} skipped: every card is digital-only`)
   for (const [k, n] of [...byKind].sort((a, b) => b[1] - a[1]).slice(0, 6)) {
     console.log(`    ${k}: ${n}`)
   }

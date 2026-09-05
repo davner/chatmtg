@@ -173,10 +173,16 @@ rather than hidden.
 
 ### Preconstructed decks
 
-MTGJSON publishes 3,029 decks; only 743 of them are Secret Lair. The other 2,285
-are commander decks, Jumpstart packs, theme decks, intro packs, planeswalker
-decks, and toolkits — products people buy sealed and want in a collection just
-as much.
+MTGJSON calls all of these "decks", but the word covers 45 different product
+types and hides how different they are. A Jumpstart pack is 20 cards, a theme
+deck 60, a commander deck 100, an MTGO redemption set 264. So the wall's **Decks
+& packs** tab lists them with a kind filter, and every card states its kind and
+size.
+
+The five biggest are Jumpstart (570), Theme Deck (220), MTGO Redemption (197),
+Commander Deck (183), and Intro Pack (167). 15 products whose every card is
+digital-only are skipped: they cannot be owned in paper, so they have no place
+in a collection import.
 
 They come from `AllDeckFiles.tar.gz`, one ~257 MB download rather than 2,285
 requests, cached like the Scryfall bulk file. Each deck file carries whole card

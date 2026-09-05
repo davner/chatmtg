@@ -434,3 +434,17 @@ a { text-underline-offset: 0.18em; text-decoration-thickness: from-font; }
 /* Reserve the incoming table's height; without it the page shifts on load. */
 .loadingpanel { min-height: 70vh; }
 @media (max-width: 640px) { .loadingpanel { min-height: 60vh; } }
+
+/* Placeholder that reserves the incoming table's shape. */
+.skeleton { min-height: 70vh; }
+@media (max-width: 640px) { .skeleton { min-height: 60vh; } }
+.skelhead { padding: 14px 15px; border-bottom: 1px solid var(--rule-soft); }
+.skelrows { list-style: none; margin: 0; padding: 0; }
+.skelrows li {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 15px; border-bottom: 1px solid var(--rule-soft);
+}
+.skelbar { display: block; height: 12px; border-radius: 2px; background: var(--rule); }
+.skelbar.wide { width: 38%; height: 10px; }
+.skelbar.qty { width: 34px; flex: none; }
+.skelbar.tag { width: 52px; flex: none; margin-left: auto; }
