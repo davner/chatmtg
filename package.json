@@ -14,7 +14,8 @@
     "preview": "astro preview",
     "check": "astro check",
     "test": "vitest run",
-    "verify:data": "node scripts/verify-data.ts"
+    "verify:data": "node scripts/verify-data.ts",
+    "test:upstream": "vitest run --config vitest.upstream.config.ts"
   },
   "dependencies": {
     "@react-spring/web": "10.1.2",

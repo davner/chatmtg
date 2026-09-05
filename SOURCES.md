@@ -82,6 +82,13 @@ The name suffix "Foil Edition" is not reliable — 174 entries carry `isFoil` in
 deck *not* named Foil Edition. This is the single most consequential rule in the
 pipeline: getting it backwards records a foil someone does not own.
 
+**Two models exist, and assuming one is a mistake.** Of 321 Foil Edition pairs,
+300 reuse a single printing and separate the editions by the entry flag alone,
+while 21 give the foil its own star-suffixed collector number — Sakura Superstar
+is `1587` and `1587★`. So a Foil Edition holds the same *cards and quantities* as
+its twin, not necessarily the same *printings*. `verify:data` checks all 321
+pairs against that rule, which is how the narrower assumption was caught.
+
 ### Commander decks are different
 
 The eight Secret Lair **Commander Decks** are typed `Commander Deck`, not
@@ -179,9 +186,27 @@ Anything that cannot be resolved now fails the build instead.
 
 | Command | What it covers |
 |---|---|
-| `pnpm test` | The rules, as pure functions: the finish rule, slugs, name matching, printing choice, and every export adapter's exact bytes |
-| `pnpm verify:data` | The built data itself: 30 invariants over all 1,049 sets and 743 products |
+| `pnpm test` | 76 unit tests: the finish rule, slugs, name matching, printing choice, URL joining, language vocabularies, the vendored-list resolver, and every export adapter's exact bytes |
+| `pnpm verify:data` | The built data itself: 35 invariants over all 1,049 sets and 743 products |
+| `pnpm test:upstream` | The live sources, against the assumptions below |
 | `pnpm check` | Types across the whole project |
+
+### Upstream contract tests
+
+`pnpm test:upstream` checks the assumptions on this page against the live
+sources: that `/sets` is unpaginated, that bulk data is still JSONL under
+`jsonl_download_uri`, that MTGJSON still separates a Foil Edition by a per-entry
+flag, that commander-deck files still carry whole cards, and that the Wizards
+announcement still publishes its set-code table.
+
+These break for reasons that are nobody's fault, and a broken assumption makes
+the build produce *wrong* data rather than fail, so they run apart from the
+deploy: on demand via the **Upstream contract** workflow, and weekly. A scheduled
+failure opens an issue; a manual run just reports.
+
+One of them is a reminder rather than an assertion: it reports when MTGJSON has
+published a deck that `data/manual/` currently stands in for, which is the signal
+to delete the vendored file.
 
 `verify:data` is the one that catches upstream drift, because it inspects what
 the run actually produced rather than the code that produced it. It asserts that

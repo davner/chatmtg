@@ -92,8 +92,9 @@ Requires Node >= 22.12 and pnpm.
 | `pnpm dev` | Dev server |
 | `pnpm build` | Build 1793 static pages into `dist/` |
 | `pnpm preview` | Serve `dist/` |
-| `pnpm test` | Unit tests: pipeline rules and every export adapter |
-| `pnpm verify:data` | 30 invariants over the built data |
+| `pnpm test` | 76 unit tests: pipeline rules, the vendored-list resolver, and every export adapter |
+| `pnpm verify:data` | 35 invariants over the built data |
+| `pnpm test:upstream` | Live contract checks against Scryfall, MTGJSON, and Wizards |
 | `pnpm check` | Typecheck |
 
 `build:data` must run before `build` or `dev` — the pages read from
@@ -103,9 +104,15 @@ cached in `.cache/` and reused until upstream publishes a new one.
 ## Verifying it
 
 `pnpm test` proves the rules. `pnpm verify:data` proves the run — it inspects
-what was actually written to `public/data/` rather than the code that wrote it,
-which is what catches upstream drift. CI runs both, and `verify:data` sits
-between `build:data` and `build`, so a deploy cannot ship data that fails it.
+what was actually written to `public/data/` rather than the code that wrote it.
+CI runs both, and `verify:data` sits between `build:data` and `build`, so a
+deploy cannot ship data that fails it.
+
+`pnpm test:upstream` checks the live sources against the assumptions the pipeline
+is built on. It is deliberately outside the deploy, because it fails for reasons
+that are nobody's fault; run it from the **Upstream contract** workflow on
+demand, and it runs weekly on its own. That one matters because a changed
+upstream does not break the build — it makes the build produce wrong data.
 
 [SOURCES.md](SOURCES.md) documents every upstream source, what each one can and
 cannot answer, and the rate limits that apply.

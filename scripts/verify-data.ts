@@ -1,5 +1,6 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
+import { finishLabelOf } from '../src/lib/types.ts'
 import type { Card, DropDetail, DropSummary, SetSummary } from '../src/lib/types.ts'
 
 /**
@@ -23,9 +24,16 @@ function check(ok: boolean, label: string, detail = '') {
 }
 
 const read = <T>(p: string) => readFile(join(DATA, p), 'utf8').then((s) => JSON.parse(s) as T)
-const exists = (p: string) => stat(p).then(() => true, () => false)
 
 async function main() {
+  // Verifying output means there has to be output. Saying so beats a stack
+  // trace from a missing file.
+  if (!(await stat(join(DATA, 'sets.json')).then(() => true, () => false))) {
+    console.error('No built data found. Run `pnpm build:data` first.')
+    process.exitCode = 1
+    return
+  }
+
   const sets = await read<SetSummary[]>('sets.json')
   const drops = await read<DropSummary[]>('drops.json')
 
@@ -103,6 +111,101 @@ async function main() {
 
   const incomplete = drops.filter((d) => d.incomplete)
   notes.push(`${incomplete.length} products marked incomplete upstream`)
+
+  // --- rules that hold for every product, including ones added later --------
+  // The hand-written anchors below only cover products someone thought to list.
+  // These catch a new product that arrives broken.
+
+  const setIndex = new Map(sets.map((s) => [s.code, s]))
+  const cardIndex = new Map<string, Set<string>>()
+  const crossRef: string[] = []
+  const labelWrong: string[] = []
+  const badDates: string[] = []
+  const badProvenance: string[] = []
+  const byName = new Map<string, DropDetail>()
+
+  for (const summary of drops) {
+    const drop = await read<DropDetail>(`drops/${summary.slug}.json`).catch(() => null)
+    if (!drop) continue
+    byName.set(drop.name, drop)
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(drop.released)) {
+      badDates.push(`${drop.slug}: released "${drop.released}"`)
+    }
+    if (drop.provenance && !(drop.provenance.url && drop.provenance.retrieved)) {
+      badProvenance.push(`${drop.slug}: provenance without a url and date`)
+    }
+    if (drop.cards.length && finishLabelOf(drop.cards) !== drop.finishLabel) {
+      labelWrong.push(`${drop.slug}: labelled ${drop.finishLabel}, cards say ${finishLabelOf(drop.cards)}`)
+    }
+
+    // Every card must point at a printing that actually exists in that set.
+    for (const card of drop.cards) {
+      const code = card.setCode ?? 'sld'
+      if (!setIndex.has(code)) {
+        crossRef.push(`${drop.slug}: "${card.name}" names set ${code.toUpperCase()}, which does not exist`)
+        continue
+      }
+      let numbers = cardIndex.get(code)
+      if (!numbers) {
+        const cards = await read<Card[]>(`sets/${code}.json`).catch(() => [])
+        numbers = new Set(cards.map((c) => c.cn))
+        cardIndex.set(code, numbers)
+      }
+      if (!numbers.has(card.cn)) {
+        crossRef.push(`${drop.slug}: "${card.name}" ${code.toUpperCase()} #${card.cn} is not in that set`)
+      }
+    }
+  }
+
+  check(crossRef.length === 0, 'every drop card points at a printing that exists',
+    crossRef.slice(0, 5).join('; '))
+  check(labelWrong.length === 0, 'every finish label matches its own cards',
+    labelWrong.slice(0, 5).join('; '))
+  check(badDates.length === 0, 'every release date is a real date', badDates.slice(0, 3).join('; '))
+  check(badProvenance.length === 0, 'a vendored list always says where it came from',
+    badProvenance.slice(0, 3).join('; '))
+
+  // A Foil Edition holds the same cards in the same quantities as its twin, all
+  // in a foil finish. It does NOT always hold the same printings: some drops
+  // reuse one printing and separate the editions by the entry flag alone, while
+  // others give the foil its own star-suffixed collector number.
+  const twinProblems: string[] = []
+  let twins = 0
+  let sharedPrinting = 0
+  const tally = (cards: DropDetail['cards']) => {
+    const m = new Map<string, number>()
+    for (const c of cards) m.set(c.name, (m.get(c.name) ?? 0) + c.qty)
+    return [...m].sort().map(([n, q]) => `${q}x${n}`).join('|')
+  }
+
+  for (const [name, foilDrop] of byName) {
+    if (!name.endsWith(' Foil Edition')) continue
+    const plainDrop = byName.get(name.slice(0, -' Foil Edition'.length))
+    if (!plainDrop || !plainDrop.cards.length || !foilDrop.cards.length) continue
+    twins++
+
+    if (tally(foilDrop.cards) !== tally(plainDrop.cards)) {
+      twinProblems.push(`${foilDrop.slug}: holds different cards from its non-foil twin`)
+      continue
+    }
+    if (!foilDrop.cards.every((c) => c.finish !== 'nonfoil')) {
+      twinProblems.push(`${foilDrop.slug}: a Foil Edition containing a non-foil card`)
+    }
+    if (plainDrop.cards.some((c) => c.finish !== 'nonfoil')) {
+      twinProblems.push(`${plainDrop.slug}: a non-foil edition containing a foil card`)
+    }
+    if (foilDrop.cards.map((c) => c.id).sort().join() === plainDrop.cards.map((c) => c.id).sort().join()) {
+      sharedPrinting++
+    }
+  }
+  check(twinProblems.length === 0,
+    `all ${twins} Foil Edition pairs hold the same cards in the right finish`,
+    twinProblems.slice(0, 5).join('; '))
+  notes.push(
+    `${twins} Foil Edition pairs verified — ${sharedPrinting} share one printing, ` +
+      `${twins - sharedPrinting} use separate foil printings`,
+  )
 
   // --- anchors --------------------------------------------------------------
   // Named products whose contents are known by hand. If upstream changes shape
