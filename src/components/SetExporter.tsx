@@ -75,8 +75,7 @@ export function SetExporter({
       <div className="panelbox">
         <div className="holo" />
         <p className="empty" style={{ padding: '16px 15px' }}>
-          The card list for this set did not load. Reload the page; if it keeps failing the
-          data file is missing from the build.
+          The card list did not load. Try reloading.
         </p>
       </div>
     )
@@ -86,7 +85,7 @@ export function SetExporter({
     return (
       <div className="panelbox">
         <div className="holo" />
-        <p className="empty" style={{ padding: '16px 15px' }}>Reading the card list…</p>
+        <p className="empty" style={{ padding: '16px 15px' }}>Loading…</p>
       </div>
     )
   }
@@ -100,7 +99,7 @@ export function SetExporter({
         <ExportPane formats={exports} filename={filename} />
         {substituted > 0 && (
           <div className="subswitch">
-            <p className="field">Printings not catalogued yet</p>
+            <p className="field">Uncatalogued printings</p>
             <div className="groups" role="group" aria-label="Stand-in printings">
               <button
                 className={`grouptab${includeSubs ? ' on' : ''}`}
@@ -119,15 +118,13 @@ export function SetExporter({
             </div>
             <p className="disclaimer" style={{ marginTop: '8px' }}>
               {includeSubs
-                ? `${substituted} of these rows use a stand-in printing, because this product's own printings are not catalogued anywhere yet. The cards are right; those versions are not.`
-                : `Only the ${included.length} rows whose exact printing is known. Correct, but not the whole product.`}
+                ? `${substituted} rows use a stand-in version. Right cards, wrong printing.`
+                : `Only the ${included.length} rows with a known printing.`}
             </p>
           </div>
         )}
         <p className="disclaimer">
-          Quantities start at one of each card, non-foil where the printing allows it. That
-          is a starting point, not a record of what you own — set the quantity to zero for
-          anything you do not have, and pick the finish you actually pulled.
+          One of each to start. Set anything you do not own to zero.
         </p>
       </div>
     </>

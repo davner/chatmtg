@@ -74,7 +74,7 @@ export function ExportPane({
     <div className="panelbox">
       <div className="holo" />
       <div className="proofhead">
-        <span className="field">Label proof</span>
+        <span className="field">Export</span>
         <select
           value={index}
           onChange={(e) => setIndex(Number(e.target.value))}
@@ -90,8 +90,6 @@ export function ExportPane({
           {proven ? 'IMPORT VERIFIED' : documented ? 'DOCUMENTED' : 'HEADER ONLY'}
         </span>
       </div>
-      <p className="note">{current.note}</p>
-
       <div className="proofstage">
         {sheets((style, i) => (
           <animated.pre className="proof" style={style}>
@@ -99,8 +97,8 @@ export function ExportPane({
           </animated.pre>
         ))}
       </div>
-      {/* The status line is announced; the proof body is not, because a screen
-          reader reading 5584 CSV rows aloud on every format change is unusable. */}
+      {/* Announced instead of the proof body: a screen reader reading 5584 CSV
+          rows aloud on every format change is unusable. */}
       <p className="srstatus" role="status">
         {current.label} export ready, {current.body.split('\n').length - 1} lines.
       </p>

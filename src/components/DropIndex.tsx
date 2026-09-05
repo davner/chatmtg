@@ -33,16 +33,8 @@ export function DropIndex({ drops, base }: { drops: DropSummary[]; base: string 
     <>
       <div className="shead">
         <h2>Drops</h2>
-        <span className="count">
-          {matching.length.toLocaleString()} of {drops.length.toLocaleString()} drops
-          {shown.length < matching.length ? ` · showing ${shown.length}` : ''}
-        </span>
+        <span className="count">{matching.length.toLocaleString()} drops</span>
       </div>
-
-      <p className="empty" style={{ marginBottom: '18px' }}>
-        Secret Lair drops are not sets — every one of these shares the code SLD. Pick the
-        drop you actually bought.
-      </p>
 
       <div className="controls">
         <label className="lookup" htmlFor="drop-lookup">
@@ -64,8 +56,7 @@ export function DropIndex({ drops, base }: { drops: DropSummary[]; base: string 
 
       {shown.length === 0 ? (
         <p className="empty">
-          No drop matches <strong>{query}</strong>. Drop names are the marketing name on the
-          box, like <code>Winter Diva</code> or <code>Marvel: Dan Hipp</code>.
+          No drop matches <strong>{query}</strong>. Try <code>Winter Diva</code>.
         </p>
       ) : (
         <>

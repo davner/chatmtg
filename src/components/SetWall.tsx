@@ -105,14 +105,11 @@ export function SetWall({
         <h2>The Wall</h2>
         <span className="count">
           {dropsTab
-            ? `${dropHits.length.toLocaleString()} Secret Lair products${
-                shownDrops.length < dropHits.length ? ` · showing ${shownDrops.length}` : ''
-              }`
+            ? `${dropHits.length.toLocaleString()} drops`
             : matching.length === 0 && dropHits.length > 0
-              ? `${dropHits.length} Secret Lair drop${dropHits.length > 1 ? 's' : ''}`
-              : `${matching.length.toLocaleString()} of ${paperTotal.toLocaleString()} paper sets`}
+              ? `${dropHits.length} drops`
+              : `${matching.length.toLocaleString()} sets`}
           {!dropsTab && matching.length > 0 && dropHits.length ? ` · ${dropHits.length} drops` : ''}
-          {!dropsTab && shown.length < matching.length ? ` · showing ${shown.length}` : ''}
         </span>
       </div>
 
@@ -145,11 +142,10 @@ export function SetWall({
 
       {dropsTab ? (
         drops === null ? (
-          <p className="empty">Reading the drop list…</p>
+          <p className="empty">Loading…</p>
         ) : shownDrops.length === 0 ? (
           <p className="empty">
-            No Secret Lair matches <strong>{query}</strong>. Drop names are the name on the
-            box, like <code>Winter Diva</code> or <code>Marvel: Dan Hipp</code>.
+            No drop matches <strong>{query}</strong>. Try <code>Winter Diva</code>.
           </p>
         ) : (
           <>
@@ -176,7 +172,7 @@ export function SetWall({
 
       {!dropsTab && dropHits.length > 0 && (
         <div className="dropband">
-          <p className="field">Secret Lair drops matching “{query.trim()}”</p>
+          <p className="field">Secret Lair drops</p>
           <div className="droplist">
             {dropHits.map((d) => (
               <a className="dropcard" key={d.slug} href={`${base}drop/${d.slug}/`}>
@@ -203,9 +199,8 @@ export function SetWall({
       {dropsTab ? null : shown.length === 0 ? (
         dropHits.length === 0 ? (
           <p className="empty">
-            Nothing matches <strong>{query || GROUPS.find((g) => g.id === group)?.label}</strong>.
-            Try a set code like <code>blb</code>, a set name like <code>Bloomburrow</code>, or a
-            Secret Lair drop like <code>Winter Diva</code>.
+            Nothing matches <strong>{query}</strong>. Try <code>blb</code>,{' '}
+            <code>Bloomburrow</code>, or <code>Winter Diva</code>.
           </p>
         ) : null
       ) : (

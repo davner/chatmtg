@@ -43,17 +43,14 @@ const { drop } = Astro.props
       <div class="panelbox sourced">
         <div class="holo" />
         <div class="strucknote">
-          <strong>Sourced</strong>
+          <strong>Source</strong>
           <span>
-            MTGJSON has not published this deck yet, so the card list comes from{' '}
-            <a href={drop.provenance.url}>{drop.provenance.name}</a>, retrieved{' '}
-            {drop.provenance.retrieved}. All {drop.count} cards are correct.
+            Card list from <a href={drop.provenance.url}>Wizards' own decklist</a>.
             {drop.substituted ? (
               <>
-                {' '}<strong class="inlineflag">{drop.substituted} printings are stand-ins</strong> —
-                those cards' actual printings in this product are not catalogued by Scryfall or
-                MTGJSON yet, so an older printing is used. The card is right; the exact version
-                is not. Rows affected are marked SUB below.
+                {' '}
+                <strong class="inlineflag">{drop.substituted} rows use a stand-in version</strong>,
+                marked SUB.
               </>
             ) : null}
           </span>
@@ -68,11 +65,7 @@ const { drop } = Astro.props
         <div class="panelbox struck">
           <div class="strucknote">
             <strong>Struck</strong>
-            <span>
-              {drop.incomplete} Until it does, there is nothing here to export. This drop is
-              listed rather than hidden so you can tell it exists and that the gap is
-              upstream, not a search that failed.
-            </span>
+            <span>{drop.incomplete} Nothing to export yet.</span>
           </div>
         </div>
       </section>
