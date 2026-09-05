@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+.cache/
+.impeccable/
+public/data/
+public/icons/
+.DS_Store

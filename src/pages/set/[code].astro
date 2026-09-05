@@ -1,0 +1,72 @@
+---
+import Base from '../../layouts/Base.astro'
+import { SetExporter } from '../../components/SetExporter.tsx'
+import { DropIndex } from '../../components/DropIndex.tsx'
+import { readData } from '../../lib/data.ts'
+import { url } from '../../lib/paths.ts'
+import type { DropSummary, SetSummary } from '../../lib/types.ts'
+
+export async function getStaticPaths() {
+  const sets = await readData<SetSummary[]>('sets.json')
+  return sets.map((set) => ({ params: { code: set.code }, props: { set } }))
+}
+
+const { set } = Astro.props
+
+// Secret Lair holds every drop ever printed, so listing 2754 cards would answer
+// a question nobody asked. The drops themselves are the products people buy.
+const isSecretLair = set.code === 'sld'
+const drops = isSecretLair ? await readData<DropSummary[]>('drops.json') : []
+---
+
+<Base
+  title={`${set.name} — card list and import file | chatmtg`}
+  description={`All ${set.count} printings in ${set.name} (${set.code.toUpperCase()}), exportable as a ManaBox CSV or a plain text decklist.`}
+>
+  <section class="wrap">
+    <div class="pagehead">
+      <div>
+        <p class="crumb"><a href={url()}>The Wall</a> / {set.code.toUpperCase()}</p>
+        <h2 class="pagetitle">{set.name}</h2>
+        <div class="meta">
+          <div><span class="field">Code</span><span class="v">{set.code.toUpperCase()}</span></div>
+          <div><span class="field">Released</span><span class="v">{set.released || '—'}</span></div>
+          <div>
+            <span class="field">Printings</span>
+            <span class="v">{set.count.toLocaleString()}</span>
+          </div>
+          {
+            isSecretLair && (
+              <div>
+                <span class="field">Drops</span>
+                <span class="v">{drops.length}</span>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    {
+      isSecretLair ? (
+        <DropIndex client:load drops={drops} base={url()} />
+      ) : (
+        <div class="opened">
+          <SetExporter
+            client:load
+            source={{
+              kind: 'set',
+              url: url(`data/sets/${set.code}.json`),
+              setCode: set.code,
+              setName: set.name,
+            }}
+            binder={set.name}
+            filename={set.code}
+          />
+        </div>
+      )
+    }
+  </section>
+</Base>

@@ -1,0 +1,92 @@
+---
+import '../styles/tokens.css'
+import '../styles/slab.css'
+import { url } from '../lib/paths.ts'
+
+interface Props {
+  title: string
+  description: string
+}
+
+const { title, description } = Astro.props
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Spline+Sans+Mono:wght@400;500;700&display=swap"
+    />
+  </head>
+  <body>
+    <!--
+    THESIS: Every row is a sealed, unarguable record of one exact printing. Refuses
+    the arcane-fantasy chrome this category ships and the neutral admin table opposite.
+    OWN-WORLD: Graded-slab certification. Shell, printed label, foil rarity stamp, one
+    holographic authentication strip. The label is a surface of the slab, so it darkens
+    with it. Archivo condensed label type over Spline Sans Mono cert data, fixed field
+    order, every field carrying its printed name.
+    STORY: The visitor recognizes a product they own, opens it, reads the exact bytes,
+    and takes the file.
+    FIRST VIEWPORT: Masthead, then a wall of slabs, each with holo strip, label bar, art
+    window, fine print. Primary action is opening a slab.
+    FORM: The Slab Label, candidate 6 of the grounded list; seed key 5425e949.
+    FINISH: unreviewed and undocumented is unfinished; this build ends with the finish
+    review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+    -->
+    <header>
+      <div class="holo"></div>
+      <div class="wrap mast">
+        <a class="mark" href={url()}>
+          <div class="stamp">MTG</div>
+          <div>
+            <h1>chatmtg</h1>
+            <p class="sub">
+              Certified card lists for every set and Secret Lair drop, ready to import.
+            </p>
+          </div>
+        </a>
+        <slot name="masthead" />
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <div class="legend">
+          <div><span class="chip nonfoil">NONFOIL</span><span>as printed</span></div>
+          <div><span class="chip foil">FOIL</span><span>foil edition</span></div>
+          <div><span class="chip etched">ETCHED</span><span>etched foil</span></div>
+        </div>
+        <p>
+          Card data from <a href="https://scryfall.com">Scryfall</a>; Secret Lair drop
+          contents from <a href="https://mtgjson.com">MTGJSON</a>. Set art is shown with its
+          artist credited on each slab. No accounts, no analytics, no ads. Card art loads
+          from Scryfall and fonts from Google Fonts; nothing else leaves your browser.
+        </p>
+        <p>
+          chatmtg is unofficial Fan Content permitted under the Wizards of the Coast Fan
+          Content Policy. Not approved or endorsed by Wizards. Portions of the materials
+          used are property of Wizards of the Coast. &copy; Wizards of the Coast LLC.
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .mark {
+    text-decoration: none;
+    color: inherit;
+  }
+</style>

@@ -1,0 +1,4 @@
+# esbuild ships its darwin-arm64 binary as an optionalDependency, which pnpm
+# installs directly; its postinstall only re-fetches that same binary.
+allowBuilds:
+  esbuild: false

@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro'
+import { SetWall } from '../components/SetWall.tsx'
+import { readData } from '../lib/data.ts'
+import { url } from '../lib/paths.ts'
+import type { SetSummary } from '../lib/types.ts'
+
+const sets = await readData<SetSummary[]>('sets.json')
+const paper = sets.filter((s) => !s.digital)
+const printings = paper.reduce((n, s) => n + s.count, 0)
+const paperCount = paper.length
+---
+
+<Base
+  title="chatmtg — importable card lists for every Magic set"
+  description="Pick a Magic: The Gathering set or Secret Lair drop and get its card list as a ManaBox CSV, a Moxfield or Archidekt import, or a plain text decklist."
+>
+  <p slot="masthead" class="sub mono" style="font-size:11px">
+    {paperCount.toLocaleString()} paper sets · {printings.toLocaleString()} printings
+  </p>
+
+  <section class="wrap">
+    <SetWall client:load sets={sets} base={url()} />
+  </section>
+</Base>

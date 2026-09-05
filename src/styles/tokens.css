@@ -1,0 +1,115 @@
+/*
+ * The Slab Label. A graded-card slab is a physical object: a cool shell, a
+ * printed label, a foil rarity stamp, one holographic authentication strip.
+ *
+ * The label is a surface of the slab rather than a separate white object, so it
+ * darkens with the shell. Light mode is a slab on a lightbox; dark mode is the
+ * same slab under low light, its label printed on dark stock.
+ */
+
+:root {
+  --ground: #d7dce1;
+  --ground-2: #c8ced5;
+  --panel: #e9ecef;
+  --text: #14171a;
+  --text-soft: #454e57;
+  --rule: #98a2ab;
+  --rule-soft: #bcc4cc;
+
+  --label-stock: #fbfcfd;
+  --label-ink: #14171a;
+  --label-ink-soft: #4d565e;
+  --label-rule: #c3cad1;
+
+  --gold: #6f5310;
+  --mythic: #8e3413;
+  --uncommon: #545d66;
+
+  --holo-a: #0f6d68;
+  --holo-b: #6152d8;
+  --holo-c: #c9941f;
+  --flag: #8e3413;
+
+  --gloss: rgba(255, 255, 255, 0.22);
+  --gloss-2: rgba(255, 255, 255, 0.13);
+  --shell-lip: rgba(255, 255, 255, 0.85);
+  --shell-well: rgba(20, 23, 26, 0.09);
+  --shadow: inset 0 1px 0 var(--shell-lip), inset 0 -1px 0 var(--shell-well),
+    inset 1px 0 0 var(--shell-well), inset -1px 0 0 var(--shell-well),
+    0 1px 0 rgba(255, 255, 255, 0.7), 0 10px 24px -14px rgba(20, 23, 26, 0.55);
+  --shadow-lift: inset 0 1px 0 var(--shell-lip), inset 0 -1px 0 var(--shell-well),
+    inset 1px 0 0 var(--shell-well), inset -1px 0 0 var(--shell-well),
+    0 1px 0 rgba(255, 255, 255, 0.5), 0 18px 34px -18px rgba(20, 23, 26, 0.7);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ground: #0d1012;
+    --ground-2: #14181b;
+    --panel: #1b2124;
+    --text: #dee4ea;
+    --text-soft: #8b959e;
+    --rule: #2c343a;
+    --rule-soft: #222a2f;
+
+    --label-stock: #232a2e;
+    --label-ink: #eef2f6;
+    --label-ink-soft: #97a2ab;
+    --label-rule: #333c42;
+
+    --gold: #c9a03b;
+    --mythic: #d96a3c;
+    --uncommon: #9aa4ad;
+
+    --holo-a: #35c7bf;
+    --holo-b: #8b7bff;
+    --holo-c: #e8b747;
+    --flag: #d96a3c;
+
+    --gloss: rgba(255, 255, 255, 0.07);
+    --gloss-2: rgba(255, 255, 255, 0.045);
+    --shell-lip: rgba(255, 255, 255, 0.09);
+    --shell-well: rgba(0, 0, 0, 0.5);
+    --shadow: inset 0 1px 0 var(--shell-lip), inset 0 -1px 0 var(--shell-well),
+      inset 1px 0 0 var(--shell-well), inset -1px 0 0 var(--shell-well),
+      0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 30px -18px rgba(0, 0, 0, 0.9);
+    --shadow-lift: inset 0 1px 0 var(--shell-lip), inset 0 -1px 0 var(--shell-well),
+      inset 1px 0 0 var(--shell-well), inset -1px 0 0 var(--shell-well),
+      0 1px 0 rgba(255, 255, 255, 0.06), 0 22px 40px -20px rgba(0, 0, 0, 1);
+  }
+}
+
+:root[data-theme='dark'] {
+  --ground: #0d1012;
+  --ground-2: #14181b;
+  --panel: #1b2124;
+  --text: #dee4ea;
+  --text-soft: #8b959e;
+  --rule: #2c343a;
+  --rule-soft: #222a2f;
+
+  --label-stock: #232a2e;
+  --label-ink: #eef2f6;
+  --label-ink-soft: #97a2ab;
+  --label-rule: #333c42;
+
+  --gold: #c9a03b;
+  --mythic: #d96a3c;
+  --uncommon: #9aa4ad;
+
+  --holo-a: #35c7bf;
+  --holo-b: #8b7bff;
+  --holo-c: #e8b747;
+  --flag: #d96a3c;
+
+  --gloss: rgba(255, 255, 255, 0.07);
+  --gloss-2: rgba(255, 255, 255, 0.045);
+  --shell-lip: rgba(255, 255, 255, 0.09);
+  --shell-well: rgba(0, 0, 0, 0.5);
+  --shadow: inset 0 1px 0 var(--shell-lip), inset 0 -1px 0 var(--shell-well),
+    inset 1px 0 0 var(--shell-well), inset -1px 0 0 var(--shell-well),
+    0 1px 0 rgba(255, 255, 255, 0.04), 0 14px 30px -18px rgba(0, 0, 0, 0.9);
+  --shadow-lift: inset 0 1px 0 var(--shell-lip), inset 0 -1px 0 var(--shell-well),
+    inset 1px 0 0 var(--shell-well), inset -1px 0 0 var(--shell-well),
+    0 1px 0 rgba(255, 255, 255, 0.06), 0 22px 40px -20px rgba(0, 0, 0, 1);
+}
