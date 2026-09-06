@@ -345,7 +345,7 @@ footer a { color: inherit; }
 .dropcard .when { font: 400 11px/1 'Spline Sans Mono', monospace; color: var(--text-soft); }
 
 .qtyin {
-  flex: none; width: 48px; padding: 9px 6px; min-height: 40px;
+  flex: none; width: 48px; padding: 12px 6px; min-height: 44px;
   border: 1px solid var(--rule); border-radius: 2px;
   background: var(--ground-2); color: var(--text);
   font: 500 12px/1 'Spline Sans Mono', monospace; font-variant-numeric: tabular-nums;
@@ -354,7 +354,7 @@ footer a { color: inherit; }
 .qtyin:focus-visible { outline: 2px solid var(--holo-b); outline-offset: 1px; }
 .finishpick { display: flex; gap: 4px; flex: none; }
 .finishpick .chip {
-  cursor: pointer; background: transparent; padding: 9px 8px; min-height: 38px;
+  cursor: pointer; background: transparent; padding: 11px 8px; min-height: 44px;
   color: var(--text-soft); border-color: var(--rule); font-weight: 700;
 }
 .finishpick .chip.on { font-weight: 800; border-width: 1.5px; }

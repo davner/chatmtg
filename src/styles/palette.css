@@ -1,7 +1,7 @@
 /* One lookup over every product, reachable from any page. */
 .palettehint {
   display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; min-height: 40px;
+  padding: 11px 13px; min-height: 44px;
   background: var(--label-stock); color: var(--label-ink-soft);
   border: 1px solid var(--rule); border-radius: 2px;
   text-transform: none; letter-spacing: 0; font-weight: 600;

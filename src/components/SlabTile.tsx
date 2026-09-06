@@ -1,5 +1,6 @@
 import { animated, useSpring } from '@react-spring/web'
 import { useState } from 'react'
+import { warmProductData } from '../lib/recent.ts'
 import type { SetSummary } from '../lib/types.ts'
 
 export interface TileData extends SetSummary {
@@ -53,10 +54,17 @@ export function SlabTile({
       className="slab"
       href={href}
       style={lift}
-      onMouseEnter={() => setLifted(true)}
+      onMouseEnter={() => {
+        setLifted(true)
+        warmProductData(href)
+      }}
       onMouseLeave={() => setLifted(false)}
-      onFocus={() => setLifted(true)}
+      onFocus={() => {
+        setLifted(true)
+        warmProductData(href)
+      }}
       onBlur={() => setLifted(false)}
+      onTouchStart={() => warmProductData(href)}
     >
       <animated.div className="holo" style={sheen} />
       <div className="labelbar">

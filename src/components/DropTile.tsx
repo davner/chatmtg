@@ -1,5 +1,6 @@
 import { animated, useSpring } from '@react-spring/web'
 import { useState } from 'react'
+import { warmProductData } from '../lib/recent.ts'
 import type { DropSummary } from '../lib/types.ts'
 
 const CHIP = { FOIL: 'foil', NONFOIL: 'nonfoil', MIXED: 'mixed' } as const
@@ -26,10 +27,17 @@ export function DropTile({ drop, href }: { drop: DropSummary; href: string }) {
       className="slab dropslab"
       href={href}
       style={lift}
-      onMouseEnter={() => setLifted(true)}
+      onMouseEnter={() => {
+        setLifted(true)
+        warmProductData(href)
+      }}
       onMouseLeave={() => setLifted(false)}
-      onFocus={() => setLifted(true)}
+      onFocus={() => {
+        setLifted(true)
+        warmProductData(href)
+      }}
       onBlur={() => setLifted(false)}
+      onTouchStart={() => warmProductData(href)}
     >
       <animated.div className="holo" style={sheen} />
       <div className="labelbar">

@@ -7,8 +7,8 @@
 }
 .recentclear {
   margin-left: auto;
-  padding: 9px 11px;
-  min-height: 36px;
+  padding: 11px 13px;
+  min-height: 44px;
   font-size: 10.5px;
   color: var(--text-soft);
   border-color: var(--rule);
@@ -24,9 +24,8 @@
    view rather than hidden. */
 .recentstrip {
   list-style: none;
-  margin: 0;
+  margin: 0 0 30px;
   padding: 2px 0 6px;
-  margin-bottom: 30px;
   display: flex;
   gap: 10px;
   overflow-x: auto;

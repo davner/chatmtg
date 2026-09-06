@@ -3,8 +3,8 @@
 
 /* Every column is anchored to the row's right edge, and the finish column holds
    a fixed width, so a header label sits over the field it names on every row.
-   The number column is a floor: a long number takes space from the card name
-   and leaves its own right edge, and the header, where they were. */
+   The number column is a floor: a longer number takes its space from the card
+   name, and its right edge stays under the header label. */
 .cardpanel {
   --cn-col: 46px;
   --fin-col: 64px;
@@ -48,12 +48,6 @@
   display: flex;
   justify-content: flex-end;
 }
-/* The header overlays the top of the list, so a row reached by keyboard stops
-   below it rather than under it. */
-.cardrows li,
-.cardrows .qtyin,
-.cardrows .finishpick .chip { scroll-margin-block-start: 40px; }
-
 /* Chips wrap inside the column rather than widening it, so a printing sold in
    three finishes cannot squeeze the card name out of its own row. */
 .cardrows .fincell .finishpick {
@@ -62,6 +56,11 @@
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+
+/* The header overlays the top of the list, so a control reached by keyboard
+   stops below it rather than under it. */
+.cardrows .qtyin,
+.cardrows .finishpick .chip { scroll-margin-block-start: 40px; }
 
 .bulkbar {
   display: flex;

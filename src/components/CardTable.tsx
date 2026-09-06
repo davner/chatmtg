@@ -77,6 +77,7 @@ export function CardTable({
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<CardSort>('number')
   const [rarity, setRarity] = useState('all')
+  const [announced, setAnnounced] = useState('')
 
   const view = useMemo(() => viewRows(rows, { query, rarity, sort }), [rows, query, sort, rarity])
 
@@ -131,6 +132,8 @@ export function CardTable({
         <label className="lookup">
           <span className="field">Find</span>
           <input
+            id="card-find"
+            name="card-find"
             type="search"
             value={query}
             onChange={(e) => refine(() => setQuery(e.target.value))}
@@ -140,6 +143,8 @@ export function CardTable({
         </label>
         {rarities.length > 1 ? (
           <select
+            id="card-rarity"
+            name="card-rarity"
             value={rarity}
             onChange={(e) => refine(() => setRarity(e.target.value))}
             aria-label="Filter by rarity"
@@ -153,6 +158,8 @@ export function CardTable({
           </select>
         ) : null}
         <select
+          id="card-sort"
+          name="card-sort"
           value={sort}
           onChange={(e) => refine(() => setSort(e.target.value as CardSort))}
           aria-label="Sort cards"
@@ -175,19 +182,28 @@ export function CardTable({
             <button
               className="grouptab"
               aria-label={`Set ${scope} rows to none`}
-              onClick={() => onBulk(view.map((v) => v.index), 0)}
+              onClick={() => {
+                onBulk(view.map((v) => v.index), 0)
+                setAnnounced(`${view.length} rows set to none`)
+              }}
             >
               None
             </button>
             <button
               className="grouptab"
               aria-label={`Set ${scope} rows to one of each`}
-              onClick={() => onBulk(view.map((v) => v.index), 1)}
+              onClick={() => {
+                onBulk(view.map((v) => v.index), 1)
+                setAnnounced(`${view.length} rows set to one of each`)
+              }}
             >
               One of each
             </button>
           </div>
           <span className="bulkscope mono">{scope}</span>
+          <p className="srstatus" role="status">
+            {announced}
+          </p>
         </div>
       ) : null}
 

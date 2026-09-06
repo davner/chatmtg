@@ -76,6 +76,8 @@ export function ExportPane({
       <div className="proofhead">
         <span className="field">Export</span>
         <select
+          id="export-format"
+          name="export-format"
           value={index}
           onChange={(e) => setIndex(Number(e.target.value))}
           aria-label="Export format"
