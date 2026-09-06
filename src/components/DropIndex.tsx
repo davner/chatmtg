@@ -106,7 +106,13 @@ export function DropIndex({
 
       {shown.length === 0 ? (
         <p className="empty">
-          No drop matches <strong>{query}</strong>. Try <code>Winter Diva</code>.
+          {query ? (
+            <>
+              No drop matches <strong>{query}</strong>. Try <code>Winter Diva</code>.
+            </>
+          ) : (
+            'No drops to show.'
+          )}
         </p>
       ) : (
         <>

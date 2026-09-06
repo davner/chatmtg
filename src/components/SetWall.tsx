@@ -284,7 +284,13 @@ export function SetWall({
           <p className="empty">Loading…</p>
         ) : shownDrops.length === 0 ? (
           <p className="empty">
-            No drop matches <strong>{query}</strong>. Try <code>Winter Diva</code>.
+            {query ? (
+              <>
+                No drop matches <strong>{query}</strong>. Try <code>Winter Diva</code>.
+              </>
+            ) : (
+              'No drops to show.'
+            )}
           </p>
         ) : (
           <>
@@ -413,8 +419,14 @@ export function SetWall({
       {dropsTab || preconTab ? null : shown.length === 0 ? (
         dropHits.length === 0 && deckHits.length === 0 ? (
           <p className="empty">
-            Nothing matches <strong>{query}</strong>. Try <code>blb</code>,{' '}
-            <code>Bloomburrow</code>, or <code>Winter Diva</code>.
+            {query ? (
+              <>
+                Nothing matches <strong>{query}</strong>. Try <code>blb</code>,{' '}
+                <code>Bloomburrow</code>, or <code>Winter Diva</code>.
+              </>
+            ) : (
+              'Nothing to show.'
+            )}
           </p>
         ) : null
       ) : (

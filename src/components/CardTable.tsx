@@ -209,7 +209,13 @@ export function CardTable({
 
       {view.length === 0 ? (
         <p className="empty" style={{ padding: '14px 15px' }}>
-          No card matches <strong>{query}</strong>.
+          {query ? (
+            <>
+              No card matches <strong>{query}</strong>.
+            </>
+          ) : (
+            'No cards to show.'
+          )}
         </p>
       ) : (
         <div className={`colhead${editable && onChange ? '' : ' plain'}`}>
