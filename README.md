@@ -92,7 +92,7 @@ Requires Node >= 22.12 and pnpm.
 | `pnpm dev` | Dev server |
 | `pnpm build` | Build the static site into `dist/` (~4200 pages) |
 | `pnpm preview` | Serve `dist/` |
-| `pnpm test` | 167 unit tests: pipeline rules, search, sorting, URL state, recent products, the vendored-list resolver, and every export adapter |
+| `pnpm test` | Unit tests over the pipeline rules, search, sorting, URL state, recent products, the vendored-list resolver and every export adapter, plus the islands rendered under jsdom |
 | `pnpm verify:data` | 51 invariants over the built data |
 | `pnpm test:upstream` | Live contract checks against Scryfall, MTGJSON, and Wizards |
 | `pnpm check` | Typecheck |
