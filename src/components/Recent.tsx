@@ -64,6 +64,7 @@ export function Recent({ limit = RECENT_LIMIT }: { limit?: number }) {
                 style={style}
                 onMouseEnter={() => warmProductData(entry.href)}
                 onFocus={() => warmProductData(entry.href)}
+                onTouchStart={() => warmProductData(entry.href)}
               >
                 <span className="inner">
                   <span className="field">{KIND[entry.kind]}</span>
