@@ -249,21 +249,28 @@ export function SetWall({
             </select>
           </label>
         ) : null}
-        <div className="groups viewtoggle" role="group" aria-label="View">
-          <button
-            className={`grouptab${view === 'tiles' ? ' on' : ''}`}
-            aria-pressed={view === 'tiles'}
-            onClick={() => setView('tiles')}
-          >
-            Tiles
-          </button>
-          <button
-            className={`grouptab${view === 'table' ? ' on' : ''}`}
-            aria-pressed={view === 'table'}
-            onClick={() => setView('table')}
-          >
-            Table
-          </button>
+        <div className="viewswitch">
+          <span className="field" id="viewswitch-name">
+            View
+          </span>
+          <div className="switchshell" role="group" aria-labelledby="viewswitch-name">
+            <button
+              type="button"
+              className={`viewseg${view === 'tiles' ? ' on' : ''}`}
+              aria-pressed={view === 'tiles'}
+              onClick={() => setView('tiles')}
+            >
+              Tiles
+            </button>
+            <button
+              type="button"
+              className={`viewseg${view === 'table' ? ' on' : ''}`}
+              aria-pressed={view === 'table'}
+              onClick={() => setView('table')}
+            >
+              Table
+            </button>
+          </div>
         </div>
         <div className="groups" role="group" aria-label="Filter sets by kind">
           {GROUPS.map((g) => (

@@ -21,8 +21,35 @@
   font-variant-numeric: tabular-nums; color: var(--text-soft);
 }
 .catalogue .right { text-align: right; padding-right: 0; }
-.viewtoggle { margin-left: auto; }
+/* The switch changes how the same sets are drawn; the group tabs beside it
+   change which sets are there. Two kinds of action, so they cannot share one
+   treatment: welded into a single shell this reads as a switch, where the gapped
+   chips next to it read as filters. The field name is the same literal naming
+   the label bar and the sort control use. */
+.viewswitch { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.switchshell {
+  display: flex;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.viewseg {
+  padding: 11px 13px;
+  min-height: 44px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  background: transparent;
+  color: var(--text-soft);
+  border: 0;
+  border-radius: 0;
+}
+.viewseg + .viewseg { border-left: 1px solid var(--rule); }
+.viewseg:hover { color: var(--text); }
+.viewseg.on { background: var(--text); color: var(--ground); }
+/* Inset, because the segment is flush with the shell it sits in. */
+.viewseg:focus-visible { outline: 2px solid var(--holo-b); outline-offset: -2px; }
 @media (max-width: 640px) {
-  .viewtoggle { margin-left: 0; }
+  .viewswitch { margin-left: 0; }
   .catalogue th, .catalogue td { padding-right: 10px; }
 }
