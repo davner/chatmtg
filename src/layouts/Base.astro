@@ -31,6 +31,15 @@ const { title, description } = Astro.props
     />
   </head>
   <body>
+    <script is:inline>
+      try {
+        var raw = localStorage.getItem('chatmtg:recent')
+        var list = raw ? JSON.parse(raw) : []
+        if (Array.isArray(list) && list.length) {
+          document.documentElement.setAttribute('data-recent', '1')
+        }
+      } catch (_) {}
+    </script>
     <!--
     THESIS: Every row is a sealed, unarguable record of one exact printing. Refuses
     the arcane-fantasy chrome this category ships and the neutral admin table opposite.

@@ -69,3 +69,10 @@
   overflow: hidden;
   min-height: 2.3em;
 }
+
+/* Height reserved before paint by the inline flag in the layout, so the strip
+   arriving after hydration does not shove the wall down. */
+:root[data-recent='1'] .recentslot { min-height: 167px; }
+@media (max-width: 640px) {
+  :root[data-recent='1'] .recentslot { min-height: 196px; }
+}
