@@ -3,8 +3,10 @@ import {
   getDefaultNormalizer,
   render,
   screen,
+  waitFor,
   within,
 } from '@testing-library/react'
+import { Globals } from '@react-spring/web'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Recent, RecordVisit } from '../src/components/Recent.tsx'
 import { RECENT_KEY, type RecentEntry } from '../src/lib/recent.ts'
@@ -36,6 +38,8 @@ function seed(...entries: RecentEntry[]): void {
 
 afterEach(() => {
   window.localStorage.clear()
+  document.documentElement.removeAttribute('data-recent')
+  Globals.assign({ skipAnimation: false })
 })
 
 describe('the recently opened strip', () => {
@@ -95,15 +99,43 @@ describe('the recently opened strip', () => {
     expect(screen.queryByText('Bloomburrow')).toBeNull()
   })
 
-  it('clears the history and takes the strip off the page with it', () => {
+  it('clears the history and takes the strip off the page with it', async () => {
     seed(BLB, DIVA)
     render(<Recent />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
 
+    // Storage empties on the click; the strip leaves once the collapse rests.
     expect(window.localStorage.getItem(RECENT_KEY)).toBeNull()
-    expect(screen.queryByRole('link')).toBeNull()
+    await waitFor(() => expect(screen.queryByRole('link')).toBeNull())
     expect(screen.queryByRole('heading', { name: 'Recently opened' })).toBeNull()
+  })
+
+  it('still releases the height when motion is reduced', async () => {
+    // react-spring jumps a skipped animation straight to its end value, and the
+    // unmount hangs off the spring resting, so this is the path where a strip
+    // could sit at zero height with its links still reachable by tab.
+    Globals.assign({ skipAnimation: true })
+    document.documentElement.setAttribute('data-recent', '1')
+    seed(BLB, DIVA)
+    render(<Recent />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
+
+    expect(document.documentElement.hasAttribute('data-recent')).toBe(false)
+    await waitFor(() => expect(screen.queryByRole('link')).toBeNull())
+  })
+
+  it('releases the height the layout reserved before paint', () => {
+    document.documentElement.setAttribute('data-recent', '1')
+    seed(BLB, DIVA)
+    render(<Recent />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
+
+    // The reservation is keyed off this attribute, so it outlives the strip and
+    // holds a 167px gap open above the wall unless the clear takes it off.
+    expect(document.documentElement.hasAttribute('data-recent')).toBe(false)
   })
 
   it('renders nothing when the stored value is corrupt', () => {

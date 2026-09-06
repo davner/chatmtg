@@ -1,5 +1,5 @@
-import { animated, useReducedMotion, useTrail } from '@react-spring/web'
-import { useEffect, useState } from 'react'
+import { animated, useReducedMotion, useSpring, useTrail } from '@react-spring/web'
+import { useEffect, useRef, useState } from 'react'
 import {
   clearRecent,
   RECENT_LIMIT,
@@ -23,6 +23,8 @@ const KIND: Record<ProductKind, string> = { set: 'Set', drop: 'Drop', deck: 'Dec
  */
 export function Recent({ limit = RECENT_LIMIT }: { limit?: number }) {
   const [entries, setEntries] = useState<RecentEntry[]>([])
+  const [clearing, setClearing] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
 
   useReducedMotion()
   useEffect(() => setEntries(readRecent()), [])
@@ -33,21 +35,36 @@ export function Recent({ limit = RECENT_LIMIT }: { limit?: number }) {
     to: { transform: 'translateY(0px)' },
     config: { tension: 280, friction: 28 },
   })
+  const [collapse, api] = useSpring(() => ({ height: 0, opacity: 1 }))
+
+  /**
+   * The wall sits directly under this block, so dropping it in one frame moves
+   * everything below by its full height. Measuring first is what lets the
+   * height animate at all: it is `auto` until asked, and a spring cannot leave
+   * from a value the browser has not resolved.
+   */
+  const clear = () => {
+    const height = box.current?.offsetHeight ?? 0
+    clearRecent()
+    // The layout reserves this height from a pre-paint flag on the root. It
+    // outlives the strip unless it comes off here, holding the gap open.
+    document.documentElement.removeAttribute('data-recent')
+    setClearing(true)
+    api.start({
+      from: { height, opacity: 1 },
+      to: { height: 0, opacity: 0 },
+      config: { tension: 300, friction: 34 },
+      onRest: () => setEntries([]),
+    })
+  }
 
   if (!shown.length) return null
 
   return (
-    <>
+    <animated.div ref={box} style={clearing ? { ...collapse, overflow: 'hidden' } : undefined}>
       <div className="shead recenthead">
         <h2>Recently opened</h2>
-        <button
-          type="button"
-          className="ghost recentclear"
-          onClick={() => {
-            clearRecent()
-            setEntries([])
-          }}
-        >
+        <button type="button" className="ghost recentclear" onClick={clear}>
           Clear
         </button>
       </div>
@@ -78,7 +95,7 @@ export function Recent({ limit = RECENT_LIMIT }: { limit?: number }) {
           )
         })}
       </ul>
-    </>
+    </animated.div>
   )
 }
 
