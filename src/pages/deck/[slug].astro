@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro'
 import { SetExporter } from '../../components/SetExporter.tsx'
 import { readData } from '../../lib/data.ts'
+import { RecordVisit } from '../../components/Recent.tsx'
 import { url } from '../../lib/paths.ts'
 import type { DeckSummary, SetSummary } from '../../lib/types.ts'
 
@@ -28,6 +29,11 @@ const { deck, setName, hasSetPage } = Astro.props
   title={`${deck.name} — ${setName} deck list | chatmtg`}
   description={`The ${deck.count} cards in ${deck.name}, a ${deck.kind} from ${setName}, exportable as a ManaBox CSV or a plain text decklist.`}
 >
+  <RecordVisit
+    client:load
+    product={{ kind: 'deck', name: deck.name, href: url(`deck/${deck.slug}/`), count: deck.count }}
+  />
+
   <section class="wrap">
     <div class="pagehead">
       <div>

@@ -1,5 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
+import { search } from '../src/lib/search.ts'
+import type { SearchEntry } from '../src/lib/search.ts'
 import { finishLabelOf } from '../src/lib/types.ts'
 import type { Card, DeckDetail, DeckSummary, DropDetail, DropSummary, SetSummary } from '../src/lib/types.ts'
 
@@ -309,6 +311,55 @@ async function main() {
     const found = decks.find((d) => d.slug === slug)
     check(!!found && found.count > 0, `${label} is reachable`, found ? '' : 'missing')
   }
+
+  // --- search index ---------------------------------------------------------
+  // The index is what the search box reads instead of the three summary files,
+  // so a product missing from it is a product nobody can find by name. A
+  // missing file falls through to the count check rather than throwing, which
+  // keeps the rest of the report printing.
+  const searchIndex = await read<SearchEntry[]>('search.json').catch(() => [])
+  const products = sets.length + drops.length + decks.length
+  check(
+    searchIndex.length === products,
+    'the search index holds one entry per product',
+    `${searchIndex.length} entries against ${products} products`,
+  )
+  check(
+    searchIndex.every((e) => e.name?.trim() && e.href?.trim()),
+    'every search entry has a name and an href',
+  )
+  check(
+    new Set(searchIndex.map((e) => e.href)).size === searchIndex.length,
+    'search hrefs are unique, so no two results lead to the same page',
+  )
+
+  const indexed = new Set(searchIndex.map((e) => e.href))
+  const unindexed: string[] = []
+  for (const s of sets) if (!indexed.has(`set/${s.code}/`)) unindexed.push(`set ${s.code}`)
+  for (const d of drops) if (!indexed.has(`drop/${d.slug}/`)) unindexed.push(`drop ${d.slug}`)
+  for (const d of decks) if (!indexed.has(`deck/${d.slug}/`)) unindexed.push(`deck ${d.slug}`)
+  check(unindexed.length === 0, 'every set, drop and deck is in the search index',
+    unindexed.slice(0, 5).join('; '))
+
+  // The matcher run against the real catalogue, not a fixture: these are the
+  // products someone types the name of, and the spelling that reaches them.
+  for (const [query, href] of [
+    ['winter diva', 'drop/hatsune-miku-winter-diva/'],
+    ['ahoy', 'deck/lcc-ahoy-mateys/'],
+    ['bloomburrow', 'set/blb/'],
+    ['hatsune miku winter', 'drop/hatsune-miku-winter-diva/'],
+  ] as const) {
+    const hits = search(searchIndex, query, 5)
+    check(hits.some((h) => h.entry.href === href), `searching "${query}" finds ${href}`,
+      hits.length ? `top five: ${hits.map((h) => h.entry.href).join(', ')}` : 'nothing matched')
+  }
+
+  // A set code typed exactly outranks everything that merely mentions it.
+  const byCode = search(searchIndex, 'blb', 5)
+  check(byCode[0]?.entry.href === 'set/blb/', 'a set code typed exactly ranks its set first',
+    byCode[0] ? `got ${byCode[0].entry.href}` : 'nothing matched')
+
+  notes.push(`${searchIndex.length} search entries across sets, drops and decks`)
 
   // --- report ---------------------------------------------------------------
   for (const n of notes) console.log(`  ${n}`)

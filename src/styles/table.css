@@ -1,0 +1,85 @@
+/* The card table: column names, and the bulk quantity bar. Every colour comes
+   from tokens.css. */
+
+/* Every column is anchored to the row's right edge, and the finish column holds
+   a fixed width, so a header label sits over the field it names on every row.
+   The number column is a floor: a long number takes space from the card name
+   and leaves its own right edge, and the header, where they were. */
+.cardpanel {
+  --cn-col: 46px;
+  --fin-col: 64px;
+}
+/* A deck draws from many sets, so its numbers carry a set code as well. */
+.cardpanel.manysets { --cn-col: 84px; }
+/* Every finish a printing was made in is offered as its own chip. */
+.cardpanel.fin2 { --fin-col: 112px; }
+.cardpanel.fin3 { --fin-col: 170px; }
+
+/* Sticky resolves against the nearest scroll container, and `overflow: hidden`
+   makes the panel one: the header would pin to a box that never scrolls. `clip`
+   holds the same rounded corners without becoming a scroll container. */
+.panelbox.cardpanel { overflow: clip; }
+
+/* Forty rows down, a number and a chip say nothing on their own. */
+.colhead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 15px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--rule);
+}
+.colhead .qtyh { flex: none; width: 48px; }
+.colhead.plain .qtyh { width: 22px; }
+.colhead .nameh { flex: 1; min-width: 0; }
+.colhead .cnh,
+.colhead .finh { flex: none; }
+.colhead .finh { text-align: right; }
+
+.colhead .cnh,
+.cardrows .cn { min-width: var(--cn-col); text-align: right; white-space: nowrap; }
+.colhead .finh,
+.cardrows .fincell { width: var(--fin-col); }
+.cardrows .fincell {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+}
+/* The header overlays the top of the list, so a row reached by keyboard stops
+   below it rather than under it. */
+.cardrows li,
+.cardrows .qtyin,
+.cardrows .finishpick .chip { scroll-margin-block-start: 40px; }
+
+/* Chips wrap inside the column rather than widening it, so a printing sold in
+   three finishes cannot squeeze the card name out of its own row. */
+.cardrows .fincell .finishpick {
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.bulkbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 9px 15px 10px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.bulkscope {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Three chips would leave a phone no room for the card name, so on a narrow
+   screen the third wraps under the other two. */
+@media (max-width: 640px) {
+  .cardpanel.fin3 { --fin-col: 112px; }
+}

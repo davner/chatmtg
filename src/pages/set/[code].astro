@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro'
 import { SetExporter } from '../../components/SetExporter.tsx'
 import { DropIndex } from '../../components/DropIndex.tsx'
 import { readData } from '../../lib/data.ts'
+import { RecordVisit } from '../../components/Recent.tsx'
 import { url } from '../../lib/paths.ts'
 import type { DeckSummary, DropSummary, SetSummary } from '../../lib/types.ts'
 
@@ -26,6 +27,11 @@ const decks = isSecretLair
   title={`${set.name} — card list and import file | chatmtg`}
   description={`All ${set.count} printings in ${set.name} (${set.code.toUpperCase()}), exportable as a ManaBox CSV or a plain text decklist.`}
 >
+  <RecordVisit
+    client:load
+    product={{ kind: 'set', name: set.name, href: url(`set/${set.code}/`), count: set.count }}
+  />
+
   <section class="wrap">
     <div class="pagehead">
       <div>

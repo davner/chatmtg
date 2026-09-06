@@ -1,0 +1,72 @@
+/* Recently opened. The strip reuses the drop card so a returning visitor meets
+   a shape they already know, sized down because it is a way back, not a wall. */
+
+.recenthead {
+  align-items: center;
+  margin-bottom: 14px;
+}
+.recentclear {
+  margin-left: auto;
+  padding: 9px 11px;
+  min-height: 36px;
+  font-size: 10.5px;
+  color: var(--text-soft);
+  border-color: var(--rule);
+}
+.recentclear:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+/* One row, so eight products cost the vertical space of one and the wall stays
+   the first thing on the page. Cards shrink before the row scrolls, so a strip
+   that nearly fits fits, and one that cannot scrolls with the next card in
+   view rather than hidden. */
+.recentstrip {
+  list-style: none;
+  margin: 0;
+  padding: 2px 0 6px;
+  margin-bottom: 30px;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) var(--ground-2);
+}
+.recentstrip > li {
+  flex: 0 1 194px;
+  min-width: 150px;
+  display: flex;
+}
+.recentstrip::-webkit-scrollbar {
+  height: 8px;
+}
+.recentstrip::-webkit-scrollbar-track {
+  background: var(--ground-2);
+}
+.recentstrip::-webkit-scrollbar-thumb {
+  background: var(--rule);
+}
+
+.recentcard {
+  flex: 1;
+  min-width: 0;
+}
+.recentcard .inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+}
+.rname {
+  font-size: 14.5px;
+  font-weight: 800;
+  line-height: 1.15;
+  font-variation-settings: 'wdth' 80;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.3em;
+}

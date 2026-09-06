@@ -2,10 +2,13 @@ import { animated, useReducedMotion, useTrail } from '@react-spring/web'
 import { useEffect, useMemo, useState } from 'react'
 import type { DropSummary } from '../lib/types.ts'
 import { PRODUCT_SORTS, sortProducts, type ProductSort } from '../lib/sort.ts'
+import { readState, writeState } from '../lib/urlstate.ts'
 
 const CHIP = { FOIL: 'foil', NONFOIL: 'nonfoil', MIXED: 'mixed' } as const
 
 const PAGE = 48
+
+const DEFAULTS = { q: '', sort: 'newest', show: PAGE }
 
 /**
  * 735 drops is far too many to scroll, and this page is where the wall sends
@@ -23,11 +26,16 @@ export function DropIndex({
 }) {
   const [all, setAll] = useState<DropSummary[] | null>(null)
   const drops = all ?? seed
-  const [query, setQuery] = useState('')
-  const [limit, setLimit] = useState(PAGE)
-  const [sort, setSort] = useState<ProductSort>('newest')
+  const initial = readState(DEFAULTS)
+  const [query, setQuery] = useState(initial.q)
+  const [limit, setLimit] = useState(initial.show)
+  const [sort, setSort] = useState<ProductSort>(initial.sort as ProductSort)
 
   useReducedMotion()
+
+  useEffect(() => {
+    writeState({ q: query, sort, show: limit }, DEFAULTS)
+  }, [query, sort, limit])
 
   const q = query.trim().toLowerCase()
 

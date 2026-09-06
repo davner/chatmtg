@@ -1,0 +1,28 @@
+/* A compact view of the catalogue. Tiles are for browsing; a table is for
+   finding, and scanning 1049 sets through 300px tiles is slow. */
+.catalogue { overflow-x: auto; }
+.catalogue table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.catalogue th {
+  position: sticky; top: 0; z-index: 1;
+  text-align: left; white-space: nowrap;
+  font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700;
+  font-variation-settings: 'wdth' 88; color: var(--text-soft);
+  background: var(--ground); border-bottom: 1px solid var(--rule);
+  padding: 8px 14px 8px 0;
+}
+.catalogue td {
+  padding: 9px 14px 9px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: baseline;
+}
+.catalogue td a { color: inherit; font-weight: 600; }
+.catalogue .mono {
+  font-family: 'Spline Sans Mono', ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums; color: var(--text-soft);
+}
+.catalogue .right { text-align: right; padding-right: 0; }
+.viewtoggle { margin-left: auto; }
+@media (max-width: 640px) {
+  .viewtoggle { margin-left: 0; }
+  .catalogue th, .catalogue td { padding-right: 10px; }
+}

@@ -1,7 +1,12 @@
 ---
 import '../styles/tokens.css'
 import '../styles/slab.css'
+import '../styles/catalogue.css'
+import '../styles/palette.css'
+import '../styles/table.css'
+import '../styles/recent.css'
 import { url } from '../lib/paths.ts'
+import { Palette } from '../components/Palette.tsx'
 
 interface Props {
   title: string
@@ -51,6 +56,7 @@ const { title, description } = Astro.props
             <p class="sub">Magic card lists, ready to import</p>
           </div>
         </a>
+        <Palette client:load base={url()} />
         <slot name="masthead" />
       </div>
     </header>

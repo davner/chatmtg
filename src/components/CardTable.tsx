@@ -5,14 +5,58 @@ import type { Finish } from '../lib/types.ts'
 
 const PAGE = 200
 
+/** A row with its position in the unfiltered list, which is where an edit lands. */
+export interface ViewRow {
+  row: CardRow
+  index: number
+}
+
+export interface CardFilter {
+  query: string
+  rarity: string
+  sort: CardSort
+}
+
 /**
  * The input's min and max only govern the spinner; typed and pasted values reach
  * onChange unchecked, and an unclamped quantity ships straight into the CSV.
  */
-export function clampQty(raw: string): number {
+export function clampQty(raw: string | number): number {
   const n = Math.trunc(Number(raw))
   if (!Number.isFinite(n)) return 0
   return Math.min(99, Math.max(0, n))
+}
+
+/**
+ * Rows are carried with their original index, because editing writes back to the
+ * unfiltered list and a filtered position would point at the wrong card.
+ */
+export function viewRows(rows: CardRow[], { query, rarity, sort }: CardFilter): ViewRow[] {
+  const q = query.trim().toLowerCase()
+  const picked = rows
+    .map((row, index) => ({ row, index }))
+    .filter(
+      ({ row }) =>
+        (rarity === 'all' || row.rarity === rarity) &&
+        (!q || row.name.toLowerCase().includes(q) || row.cn.toLowerCase() === q),
+    )
+  return picked.sort((a, b) => compareCards(a.row, b.row, sort))
+}
+
+/**
+ * A bulk edit names the rows it touches by original index. An index outside the
+ * list is dropped rather than written, so a view built against a card list that
+ * has since been replaced cannot set a quantity on a card nobody looked at.
+ */
+export function setQtyAt(rows: CardRow[], indices: readonly number[], qty: number): CardRow[] {
+  const q = clampQty(qty)
+  const next = rows.slice()
+  for (const i of indices) {
+    const row = next[i]
+    if (!row || row.qty === q) continue
+    next[i] = { ...row, qty: q }
+  }
+  return next
 }
 
 export function CardTable({
@@ -20,31 +64,21 @@ export function CardTable({
   page,
   onPage,
   onChange,
+  onBulk,
   editable = true,
 }: {
   rows: CardRow[]
   page: number
   onPage: (n: number) => void
   onChange?: (index: number, patch: Partial<CardRow>) => void
+  onBulk?: (indices: number[], qty: number) => void
   editable?: boolean
 }) {
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<CardSort>('number')
   const [rarity, setRarity] = useState('all')
 
-  // Rows are carried with their original index, because editing writes back to
-  // the unfiltered list and a filtered position would point at the wrong card.
-  const view = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    const picked = rows
-      .map((row, index) => ({ row, index }))
-      .filter(
-        ({ row }) =>
-          (rarity === 'all' || row.rarity === rarity) &&
-          (!q || row.name.toLowerCase().includes(q) || row.cn.toLowerCase() === q),
-      )
-    return picked.sort((a, b) => compareCards(a.row, b.row, sort))
-  }, [rows, query, sort, rarity])
+  const view = useMemo(() => viewRows(rows, { query, rarity, sort }), [rows, query, sort, rarity])
 
   const rarities = useMemo(
     () => [...new Set(rows.map((r) => r.rarity))].sort(),
@@ -62,13 +96,27 @@ export function CardTable({
   // nothing. A commander deck draws from many, where it is the whole point.
   const manySets = new Set(rows.map((r) => r.setCode)).size > 1
 
+  // The finish column is as wide as the most finishes any row in this list
+  // offers, so a header label sits over the values it names rather than over
+  // wherever the widest row happened to push them.
+  const slots =
+    editable && onChange
+      ? rows.reduce((n, r) => Math.max(n, (r.available ?? [r.finish]).length), 1)
+      : 1
+
+  // Paging means fewer rows are on screen than the filter matched, so the count
+  // names what the buttons will write rather than what is under them.
+  const scope = filtered
+    ? `${view.length.toLocaleString()} matching`
+    : `all ${rows.length.toLocaleString()}`
+
   function refine(next: () => void) {
     onPage(0)
     next()
   }
 
   return (
-    <div className="panelbox">
+    <div className={`panelbox cardpanel fin${Math.min(3, slots)}${manySets ? ' manysets' : ''}`}>
       <div className="holo" />
       <div className="proofhead">
         <span className="field">Cards</span>
@@ -117,11 +165,44 @@ export function CardTable({
         </select>
       </div>
 
+      {/* Bulk edits reach the filtered rows only, and say how many those are: a
+          filter is a statement about which cards are in hand, and rewriting the
+          hidden ones would overstate a collection the visitor never saw. */}
+      {editable && onBulk && view.length > 0 ? (
+        <div className="bulkbar">
+          <span className="field">Quantity</span>
+          <div className="groups" role="group" aria-label="Set quantity across rows">
+            <button
+              className="grouptab"
+              aria-label={`Set ${scope} rows to none`}
+              onClick={() => onBulk(view.map((v) => v.index), 0)}
+            >
+              None
+            </button>
+            <button
+              className="grouptab"
+              aria-label={`Set ${scope} rows to one of each`}
+              onClick={() => onBulk(view.map((v) => v.index), 1)}
+            >
+              One of each
+            </button>
+          </div>
+          <span className="bulkscope mono">{scope}</span>
+        </div>
+      ) : null}
+
       {view.length === 0 ? (
         <p className="empty" style={{ padding: '14px 15px' }}>
           No card matches <strong>{query}</strong>.
         </p>
-      ) : null}
+      ) : (
+        <div className={`colhead${editable && onChange ? '' : ' plain'}`}>
+          <span className="field qtyh">Qty</span>
+          <span className="field nameh">Card</span>
+          <span className="field cnh">Number</span>
+          <span className="field finh">Finish</span>
+        </div>
+      )}
 
       <ul className="cardrows">
         {slice.map(({ row: r, index }) => {
@@ -152,11 +233,13 @@ export function CardTable({
               <span className="cn">
                 {manySets ? `${r.setCode.toUpperCase()} ` : ''}#{r.cn}
               </span>
-              {editable && onChange ? (
-                <FinishPicker row={r} onPick={(finish) => onChange(index, { finish })} />
-              ) : (
-                <span className={`chip ${r.finish}`}>{r.finish.toUpperCase()}</span>
-              )}
+              <span className="fincell">
+                {editable && onChange ? (
+                  <FinishPicker row={r} onPick={(finish) => onChange(index, { finish })} />
+                ) : (
+                  <span className={`chip ${r.finish}`}>{r.finish.toUpperCase()}</span>
+                )}
+              </span>
             </li>
           )
         })}

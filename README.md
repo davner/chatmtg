@@ -92,8 +92,8 @@ Requires Node >= 22.12 and pnpm.
 | `pnpm dev` | Dev server |
 | `pnpm build` | Build the static site into `dist/` (~4200 pages) |
 | `pnpm preview` | Serve `dist/` |
-| `pnpm test` | 87 unit tests: pipeline rules, sorting, the vendored-list resolver, and every export adapter |
-| `pnpm verify:data` | 42 invariants over the built data |
+| `pnpm test` | 167 unit tests: pipeline rules, search, sorting, URL state, recent products, the vendored-list resolver, and every export adapter |
+| `pnpm verify:data` | 51 invariants over the built data |
 | `pnpm test:upstream` | Live contract checks against Scryfall, MTGJSON, and Wizards |
 | `pnpm check` | Typecheck |
 
@@ -101,12 +101,29 @@ Requires Node >= 22.12 and pnpm.
 `public/data/`, which is gitignored and generated. The Scryfall bulk file is
 cached in `.cache/` and reused until upstream publishes a new one.
 
+## Finding things
+
+Four thousand products need more than a substring match, so the site carries a
+few things a catalogue of this size expects.
+
+| | |
+|---|---|
+| Find anything | `/` or `⌘K` opens one lookup over all 4,190 products. The 85 KB index is fetched on first open, never before. |
+| Forgiving matching | Tokenised and order-independent, punctuation and accent insensitive, one-character typos tolerated on longer words. "hatsune miku winter" finds "Hatsune Miku: Winter Diva"; plain substring does not. |
+| Shareable views | Search, filter, sort, view and page live in the query string, so `?view=table&sort=oldest` opens exactly that and the back button works. Only non-default values are written. |
+| Two densities | Tiles to browse, a table to find. Scanning 1,049 sets through 300px tiles is slow. |
+| Bulk quantities | Set every row, or every row currently filtered, to none or one. Editing 260 inputs by hand is how an import ends up overstating a collection. |
+| Recently opened | The last few products, in localStorage. No accounts, no analytics, nothing leaves the browser. |
+
 ## Loading
 
 Only the first screenful is server-rendered. The wall ships 60 sets and the
 Secret Lair index 48 drops; the full catalogue is fetched the moment someone
 searches, filters, sorts, or asks for more. That took the home page from 632 KB
 to 100 KB of markup, and the Secret Lair page from 372 KB to 60 KB.
+
+Links prefetch on hover, and a product page warms its own card data the same
+way, so opening something is usually instant rather than a skeleton.
 
 Entrance animations move rather than fade. Fading text renders it below 4.5:1
 contrast for the length of the fade, which an audit catches and a reader on a

@@ -8,6 +8,12 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   site: 'https://chatmtg.danavner.com',
   output: 'static',
+  // A product page costs a navigation before the island can even ask for its
+  // card list. Hover is the one strategy that stays at zero requests on a wall
+  // of 60 tiles: it waits 80ms of pointer or keyboard focus on a single link,
+  // where viewport prefetches everything on screen at once. Astro drops back to
+  // prefetching on tap when the connection reports Data Saver or 2g.
+  prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   integrations: [react()],
   vite: { plugins: [tailwindcss()] },
 })

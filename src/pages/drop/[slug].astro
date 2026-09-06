@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro'
 import { SetExporter } from '../../components/SetExporter.tsx'
 import { readData } from '../../lib/data.ts'
+import { RecordVisit } from '../../components/Recent.tsx'
 import { url } from '../../lib/paths.ts'
 import type { DropSummary } from '../../lib/types.ts'
 
@@ -17,6 +18,11 @@ const { drop } = Astro.props
   title={`${drop.name} — Secret Lair card list | chatmtg`}
   description={`The ${drop.count} cards in the ${drop.name} Secret Lair drop, with the right finish, exportable as a ManaBox CSV or a plain text decklist.`}
 >
+  <RecordVisit
+    client:load
+    product={{ kind: 'drop', name: drop.name, href: url(`drop/${drop.slug}/`), count: drop.count }}
+  />
+
   <section class="wrap">
     <div class="pagehead">
       <div>

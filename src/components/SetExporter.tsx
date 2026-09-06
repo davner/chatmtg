@@ -1,6 +1,6 @@
 import { useReducedMotion } from '@react-spring/web'
 import { useEffect, useMemo, useState } from 'react'
-import { CardTable } from './CardTable.tsx'
+import { CardTable, setQtyAt } from './CardTable.tsx'
 import { Skeleton } from './Skeleton.tsx'
 import { ExportPane } from './ExportPane.tsx'
 import { FORMATS } from '../lib/export/index.ts'
@@ -71,6 +71,12 @@ export function SetExporter({
     })
   }
 
+  // The indices come from the table's filtered view, so a bulk action reaches
+  // the rows the visitor can see and no others.
+  function bulk(indices: number[], qty: number) {
+    setRows((prev) => (prev ? setQtyAt(prev, indices, qty) : prev))
+  }
+
   if (failed) {
     return (
       <div className="panelbox loadingpanel">
@@ -89,7 +95,7 @@ export function SetExporter({
   return (
     <>
       <div className="tablecol">
-        <CardTable rows={rows} page={page} onPage={setPage} onChange={change} />
+        <CardTable rows={rows} page={page} onPage={setPage} onChange={change} onBulk={bulk} />
       </div>
       <div className="exportcol">
         <ExportPane formats={exports} filename={filename} />

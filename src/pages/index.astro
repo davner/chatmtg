@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro'
 import { SetWall } from '../components/SetWall.tsx'
+import { Recent } from '../components/Recent.tsx'
 import { readData } from '../lib/data.ts'
 import { url } from '../lib/paths.ts'
 import type { SetSummary } from '../lib/types.ts'
@@ -26,6 +27,7 @@ const paperCount = paper.length
   </p>
 
   <section class="wrap">
+    <Recent client:load />
     <SetWall
       client:load
       sets={releases.slice(0, 60)}

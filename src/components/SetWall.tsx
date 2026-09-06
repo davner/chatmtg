@@ -4,6 +4,7 @@ import { SlabTile, type TileData } from './SlabTile.tsx'
 import { DropTile } from './DropTile.tsx'
 import type { DeckSummary, DropSummary } from '../lib/types.ts'
 import { PRODUCT_SORTS, sortProducts, type ProductSort } from '../lib/sort.ts'
+import { readState, writeState } from '../lib/urlstate.ts'
 
 /**
  * Scryfall's 24 set types are too fine-grained to pick from. These groupings are
@@ -21,6 +22,15 @@ const GROUPS: { id: string; label: string; types?: string[]; drops?: boolean; pr
 const CHIP = { FOIL: 'foil', NONFOIL: 'nonfoil', MIXED: 'mixed' } as const
 
 const PAGE = 60
+
+const DEFAULTS = {
+  q: '',
+  group: 'releases',
+  sort: 'newest',
+  kind: 'all',
+  view: 'tiles',
+  show: PAGE,
+}
 
 export function SetWall({
   sets: seed,
@@ -53,21 +63,29 @@ export function SetWall({
     () => total ?? sets.filter((s) => !s.digital).length,
     [total, sets],
   )
-  const [query, setQuery] = useState('')
-  const [group, setGroup] = useState('releases')
-  const [limit, setLimit] = useState(PAGE)
-  const [sort, setSort] = useState<ProductSort>('newest')
+  // Seeded from the query string so a shared or reloaded link opens on the same
+  // view it was copied from.
+  const initial = readState(DEFAULTS)
+  const [query, setQuery] = useState(initial.q)
+  const [group, setGroup] = useState(initial.group)
+  const [limit, setLimit] = useState(initial.show)
+  const [view, setView] = useState(initial.view)
+  const [sort, setSort] = useState<ProductSort>(initial.sort as ProductSort)
   const [drops, setDrops] = useState<DropSummary[] | null>(presetDrops ?? null)
   const [decks, setDecks] = useState<DeckSummary[] | null>(null)
-  const [kind, setKind] = useState('all')
+  const [kind, setKind] = useState(initial.kind)
 
   useReducedMotion()
+
+  useEffect(() => {
+    writeState({ q: query, group, sort, kind, view, show: limit }, DEFAULTS)
+  }, [query, group, sort, kind, view, limit])
 
   const q = query.trim().toLowerCase()
 
   // The full catalogue is only needed once someone searches, filters, or asks
   // for more than the first page.
-  const needAll = Boolean(q) || group !== 'releases' || limit > PAGE
+  const needAll = Boolean(q) || group !== 'releases' || limit > PAGE || sort !== 'newest'
   useEffect(() => {
     if (!needAll || all) return
     fetch(`${base}data/sets.json`)
@@ -231,6 +249,22 @@ export function SetWall({
             </select>
           </label>
         ) : null}
+        <div className="groups viewtoggle" role="group" aria-label="View">
+          <button
+            className={`grouptab${view === 'tiles' ? ' on' : ''}`}
+            aria-pressed={view === 'tiles'}
+            onClick={() => setView('tiles')}
+          >
+            Tiles
+          </button>
+          <button
+            className={`grouptab${view === 'table' ? ' on' : ''}`}
+            aria-pressed={view === 'table'}
+            onClick={() => setView('table')}
+          >
+            Table
+          </button>
+        </div>
         <div className="groups" role="group" aria-label="Filter sets by kind">
           {GROUPS.map((g) => (
             <button
@@ -385,20 +419,47 @@ export function SetWall({
         ) : null
       ) : (
         <>
-          <div className="wall">
-            {trail.map((style, i) => {
-              const set = shown[i]!
-              return (
-                <animated.div key={set.code} style={style}>
-                  <SlabTile
-                    set={set}
-                    href={hrefFor ? hrefFor(set) : `${base}set/${set.code}/`}
-                    iconUrl={`${base}icons/${set.icon}`}
-                  />
-                </animated.div>
-              )
-            })}
-          </div>
+          {view === 'table' ? (
+            <div className="catalogue">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Set</th>
+                    <th>Code</th>
+                    <th>Year</th>
+                    <th className="right">Cards</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.map((set) => (
+                    <tr key={set.code}>
+                      <td>
+                        <a href={hrefFor ? hrefFor(set) : `${base}set/${set.code}/`}>{set.name}</a>
+                      </td>
+                      <td className="mono">{set.code.toUpperCase()}</td>
+                      <td className="mono">{set.released.slice(0, 4) || '—'}</td>
+                      <td className="mono right">{set.count.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="wall">
+              {trail.map((style, i) => {
+                const set = shown[i]!
+                return (
+                  <animated.div key={set.code} style={style}>
+                    <SlabTile
+                      set={set}
+                      href={hrefFor ? hrefFor(set) : `${base}set/${set.code}/`}
+                      iconUrl={`${base}icons/${set.icon}`}
+                    />
+                  </animated.div>
+                )
+              })}
+            </div>
+          )}
           {shown.length < (all ? matching.length : (seedCount ?? matching.length)) ? (
             <div className="more">
               <button onClick={() => setLimit((n) => n + PAGE)}>Show more</button>

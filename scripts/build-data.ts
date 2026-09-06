@@ -11,6 +11,7 @@ import {
 import { fetchSecretLairDrops } from './sources/mtgjson.ts'
 import { loadManualDecks } from './sources/manual.ts'
 import { fetchAllDecks } from './sources/decks.ts'
+import type { SearchEntry } from '../src/lib/search.ts'
 import type { Card, Finish, SetSummary } from '../src/lib/types.ts'
 
 const ROOT = new URL('..', import.meta.url).pathname
@@ -225,6 +226,36 @@ async function main() {
   for (const [k, n] of [...byKind].sort((a, b) => b[1] - a[1]).slice(0, 6)) {
     console.log(`    ${k}: ${n}`)
   }
+
+  // One index over all three populations, fetched lazily by the search box.
+  // It carries only the name, link, subtitle and set code a result renders,
+  // because it is downloaded whole the first time anyone types.
+  console.log('search index:')
+  const countLabel = (n: number) => `${n} card${n === 1 ? '' : 's'}`
+  const searchIndex: SearchEntry[] = [
+    ...summaries.map((s) => ({
+      kind: 'set' as const,
+      name: s.name,
+      href: `set/${s.code}/`,
+      sub: `${s.code.toUpperCase()} · ${countLabel(s.count)}`,
+      code: s.code,
+    })),
+    ...drops.map((d) => ({
+      kind: 'drop' as const,
+      name: d.name,
+      href: `drop/${d.slug}/`,
+      sub: `${d.commanderDeck ? 'Secret Lair Commander Deck' : d.bundle ? 'Secret Lair bundle' : 'Secret Lair'} · ${countLabel(d.count)}`,
+    })),
+    ...precons.map((d) => ({
+      kind: 'deck' as const,
+      name: d.name,
+      href: `deck/${d.slug}/`,
+      sub: `${d.setCode.toUpperCase()} · ${d.kind} · ${countLabel(d.count)}`,
+      code: d.setCode,
+    })),
+  ]
+  await writeFile(join(DATA, 'search.json'), JSON.stringify(searchIndex))
+  console.log(`  wrote ${searchIndex.length} entries`)
 
   console.log('icons:')
   const n = await downloadIcons(new Set(sets.map((s) => s.icon_svg_uri)), ICONS)
